@@ -1,0 +1,71 @@
+//
+//  ARViewContainer.swift
+//  SonAR-ECS
+//
+//  Created by Gabriella Angelina Widjaja on 16/08/26.
+//
+
+import SwiftUI
+import RealityKit
+import ARKit
+
+struct ARViewContainer: UIViewRepresentable {
+    @Binding var mode: ARSessionMode
+    var onPlacementReady: ((PlacementService) -> Void)? = nil
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIView(context: Context) -> ARView {
+        let arView = ARView(frame: .zero)
+
+        guard ARSessionConfigurator.run(on: arView) else {
+            return arView
+        }
+
+        Task {
+            await ARSceneSetup.setup(arView: arView)
+
+            let cameraSync = ARCameraSync(scene: arView.scene)
+            arView.session.delegate = cameraSync
+            context.coordinator.cameraSync = cameraSync
+
+            let guidedBridge = ARGuidedBridge(scene: arView.scene, mode: mode)
+            context.coordinator.guidedBridge = guidedBridge
+
+            let placementService = PlacementService(arView: arView, guidedBridge: guidedBridge)
+            context.coordinator.placementService = placementService
+
+            onPlacementReady?(placementService)
+        }
+
+        return arView
+    }
+
+    func updateUIView(_ uiView: ARView, context: Context) {
+        if case .freeExplore(let freeExploreViewModel) = mode {
+            context.coordinator.guidedBridge?.switchToFreeExplore(freeExploreViewModel)
+        }
+    }
+
+    final class Coordinator: NSObject {
+        var cameraSync: ARCameraSync?
+        var placementService: PlacementService?
+        var guidedBridge: ARGuidedBridge?
+
+        @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
+            guard let arView = recognizer.view as? ARView else { return }
+            let point = recognizer.location(in: arView)
+
+            Task {
+                guard let placementService = self.placementService else { return }
+
+                let markerHandled = await placementService.handleMarkerTap(at: point)
+                if !markerHandled {
+                    await placementService.handleTap(at: point)
+                }
+            }
+        }
+    }
+}

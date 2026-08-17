@@ -1,0 +1,76 @@
+import Foundation
+
+@MainActor
+@Observable
+final class GuidedWalkthroughViewModel {
+
+    private(set) var step: GuidedStep = .placePrompt(.findFlat)
+    private(set) var progress = GuidedProgress()
+    private(set) var feedback: FeedbackPresentation?
+
+    @ObservationIgnored weak var bridge: ARGuidedBridge?
+    @ObservationIgnored private var isAdvancing = false
+
+    var helpText: String { step.helpText }
+
+    // MARK: - Dipanggil dari ARGuidedBridge
+
+    func applyLesson(_ lesson: GuidedLesson, presentation: FeedbackPresentation) {
+        feedback = presentation
+        step = .feedback(lesson)
+    }
+
+    func applyRetry(_ reason: GuidedRetryReason) {
+        step = .retry(reason)
+    }
+
+    func recordOutcome(_ outcome: PlacementOutcome) -> GuidedResolution {
+        progress.record(outcome)
+    }
+
+    // MARK: - Dipanggil dari UI (SwiftUI View)
+
+    func homeTapped(onExit: () -> Void) {
+        bridge?.dismissFeedbackRobot()
+        onExit()
+    }
+
+    func continueTapped() {
+        advanceFromFeedback()
+    }
+
+    func retryTapped() {
+        bridge?.dismissFeedbackRobot()
+        bridge?.placeAgain()
+        step = .placePrompt(progress.prompt)
+    }
+
+    func restart() {
+        progress.reset()
+        isAdvancing = false
+        feedback = nil
+        step = .placePrompt(progress.prompt)
+        bridge?.dismissFeedbackRobot()
+        bridge?.placeAgain()
+    }
+
+    private func advanceFromFeedback() {
+        guard !isAdvancing else { return }
+        isAdvancing = true
+        bridge?.dismissFeedbackRobot()
+
+        Task { [weak self] in
+            try? await Task.sleep(for: GuidedTiming.robotExitDuration)
+            guard let self else { return }
+            self.isAdvancing = false
+            self.feedback = nil
+
+            if self.progress.isFinished {
+                self.step = .finale
+            } else {
+                self.step = .placePrompt(self.progress.prompt)
+                self.bridge?.placeAgain()
+            }
+        }
+    }
+}

@@ -1,0 +1,13 @@
+{
+  "pathsToIds" : {
+    "\/SonARAssets\/Sources\/SonARAssets\/SonARAssets.rkassets\/MainScene.usda" : "9A429959-6C25-4F98-AA60-97F8DF6991FB",
+    "\/SonARAssets\/Sources\/SonARAssets\/SonARAssets.rkassets\/Scene.usda" : "A38CF766-C535-427F-A183-7EC3DDD1EE7C",
+    "SonARAssets\/Sources\/SonARAssets\/SonARAssets.rkassets\/Models\/MainScene.usda" : "23DFB5FF-E2C1-4DEB-9252-EB7518FFE57E"
+  },
+  "projectID" : -886447787424335066,
+  "uuidToIntID" : {
+    "23DFB5FF-E2C1-4DEB-9252-EB7518FFE57E" : -8115891011486825084,
+    "9A429959-6C25-4F98-AA60-97F8DF6991FB" : -9118387456287139793,
+    "A38CF766-C535-427F-A183-7EC3DDD1EE7C" : -4004458084624952087
+  }
+}

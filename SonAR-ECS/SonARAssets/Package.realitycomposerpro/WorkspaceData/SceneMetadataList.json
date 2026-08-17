@@ -1,0 +1,61 @@
+{
+  "23DFB5FF-E2C1-4DEB-9252-EB7518FFE57E" : {
+    "objectMetadataList" : [
+      [
+        "23DFB5FF-E2C1-4DEB-9252-EB7518FFE57E",
+        "Root",
+        "SensorContainer",
+        "MascotNode"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "23DFB5FF-E2C1-4DEB-9252-EB7518FFE57E",
+        "Root",
+        "Hologram"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "23DFB5FF-E2C1-4DEB-9252-EB7518FFE57E",
+        "Root"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "23DFB5FF-E2C1-4DEB-9252-EB7518FFE57E",
+        "Root",
+        "SensorContainer"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "23DFB5FF-E2C1-4DEB-9252-EB7518FFE57E",
+        "Root",
+        "SensorContainer",
+        "SensorNode"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      },
+      [
+        "23DFB5FF-E2C1-4DEB-9252-EB7518FFE57E",
+        "Root",
+        "ArrowTemplate"
+      ],
+      {
+        "isExpanded" : true,
+        "isLocked" : false
+      }
+    ]
+  }
+}
