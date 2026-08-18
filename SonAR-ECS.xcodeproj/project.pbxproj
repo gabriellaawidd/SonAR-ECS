@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F2456F273031DF9E0087BB37 /* SonARAssets in Frameworks */ = {isa = PBXBuildFile; productRef = F2456F263031DF9E0087BB37 /* SonARAssets */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		F2A412D0302D73DE00CA6E65 /* SonAR-ECS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SonAR-ECS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F2456F273031DF9E0087BB37 /* SonARAssets in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = "SonAR-ECS";
 			packageProductDependencies = (
+				F2456F263031DF9E0087BB37 /* SonARAssets */,
 			);
 			productName = "SonAR-ECS";
 			productReference = F2A412D0302D73DE00CA6E65 /* SonAR-ECS.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = F2A412C7302D73DE00CA6E65;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F2456F253031DF9E0087BB37 /* XCLocalSwiftPackageReference "SonARAssets" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F2A412D1302D73DE00CA6E65 /* Products */;
 			projectDirPath = "";
@@ -256,6 +265,9 @@
 				DEVELOPMENT_TEAM = GJYV542RRH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires camera access to scan the room and place AR sensors.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -288,6 +300,9 @@
 				DEVELOPMENT_TEAM = GJYV542RRH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires camera access to scan the room and place AR sensors.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -332,6 +347,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		F2456F253031DF9E0087BB37 /* XCLocalSwiftPackageReference "SonARAssets" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = SonARAssets;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F2456F263031DF9E0087BB37 /* SonARAssets */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SonARAssets;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F2A412C8302D73DE00CA6E65 /* Project object */;
 }

@@ -2,11 +2,15 @@
 //  GuidedOverlayView.swift
 //  SonAR-ECS
 //
+//  Created by Gabriella Angelina Widjaja on 17/08/26.
+//
 
 import SwiftUI
 
 struct GuidedOverlayView: View {
     let step: GuidedStep
+    let isShowingInstruction: Bool
+    let onDismissInstruction: () -> Void
 
     let onHome: () -> Void
     let onHowItWorks: () -> Void
@@ -15,71 +19,77 @@ struct GuidedOverlayView: View {
     let onFinish: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            ToolBarView(onHome: onHome, onHowItWorks: onHowItWorks)
+        ZStack {
+            if isShowingInstruction {
+                Color.black.opacity(0.65)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
 
-            stepContent
-                .allowsHitTesting(false)
+            VStack(spacing: 0) {
+                ToolBarView(onHome: onHome, onHowItWorks: onHowItWorks)
 
-            Spacer(minLength: 0)
+                if isShowingInstruction {
+                    instructionHeader
+                        .padding(.top, 40)
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                } else if case .finale = step {
+                    MascotPromptView(
+                        mascot: MascotAsset.neutral,
+                        text: GuidedCopy.finale,
+                        mascotHeight: 120
+                    )
+                    .padding(.top, 12)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
 
-            footer
+                Spacer(minLength: 0)
+
+                footer
+            }
+            .padding(.horizontal, 20)
         }
-        .padding(.horizontal, 20)
+        .animation(.easeInOut(duration: 0.28), value: isShowingInstruction)
         .animation(.easeInOut(duration: 0.28), value: step)
     }
 
     @ViewBuilder
-    private var stepContent: some View {
-        switch step {
-        case .placePrompt(let prompt):
+    private var instructionHeader: some View {
+        if case .placePrompt(let prompt) = step {
             MascotPromptView(
                 mascot: prompt.mascot,
                 text: prompt.bubbleText,
                 mascotHeight: prompt.mascotHeight
             )
-            .padding(.top, 12)
-            .transition(.opacity.combined(with: .move(edge: .top)))
-
-        case .retry(let reason):
+        } else if case .retry(let reason) = step {
             MascotPromptView(
                 mascot: reason.mascot,
                 text: reason.bubbleText,
                 mascotHeight: reason.mascotHeight
             )
-            .padding(.top, 12)
-            .transition(.opacity)
-
-        case .feedback:
-            EmptyView()
-
-        case .finale:
-            MascotPromptView(
-                mascot: MascotAsset.neutral,
-                text: GuidedCopy.finale,
-                mascotHeight: 120
-            )
-            .padding(.top, 12)
-            .transition(.opacity.combined(with: .move(edge: .top)))
         }
     }
 
     @ViewBuilder
     private var footer: some View {
         Group {
-            switch step {
-            case .placePrompt(let prompt):
-                HintCapsule(text: prompt.footerHint)
-                    .allowsHitTesting(false)
+            if isShowingInstruction {
+                CapsuleActionButton(title: "Continue", action: onDismissInstruction)
+            } else {
+                switch step {
+                case .placePrompt(let prompt):
+                    HintCapsule(text: prompt.footerHint)
+                        .allowsHitTesting(false)
 
-            case .retry(let reason):
-                CapsuleActionButton(title: reason.actionTitle, action: onRetry)
+                case .retry(let reason):
+                    CapsuleActionButton(title: reason.actionTitle, action: onRetry)
 
-            case .feedback:
-                CapsuleActionButton(title: GuidedCopy.continueTitle, action: onContinue)
+                case .feedback:
+                    CapsuleActionButton(title: GuidedCopy.continueTitle, action: onContinue)
 
-            case .finale:
-                CapsuleActionButton(title: GuidedCopy.exploreTitle, action: onFinish)
+                case .finale:
+                    CapsuleActionButton(title: GuidedCopy.exploreTitle, action: onFinish)
+                }
             }
         }
         .padding(.bottom, 32)
@@ -87,11 +97,13 @@ struct GuidedOverlayView: View {
     }
 }
 
-#Preview("Guided Overlay") {
+#Preview() {
     ZStack {
         Color.gray.opacity(0.4).ignoresSafeArea()
         GuidedOverlayView(
             step: .placePrompt(.findFlat),
+            isShowingInstruction: true,
+            onDismissInstruction: {},
             onHome: {},
             onHowItWorks: {},
             onContinue: {},

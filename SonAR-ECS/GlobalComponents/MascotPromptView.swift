@@ -2,6 +2,8 @@
 //  MascotPromptView.swift
 //  SonAR-ECS
 //
+//  Created by Gabriella Angelina Widjaja on 17/08/26.
+//
 
 import SwiftUI
 

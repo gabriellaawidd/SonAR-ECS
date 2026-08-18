@@ -10,22 +10,29 @@ import UIKit
 import simd
 
 enum AnnotationMarkerLayout {
-    static let diameter: Float = 0.03
-    static let tapZoneRadius: Float = 0.26
+    static let diameter: Float = 0.05
+    static let tapZoneRadius: Float = 0.10
 }
 
 enum AnnotationMarker {
     static let entityName = "annotationMarker"
     static let tapZoneName = "annotationTapZone"
+    private static var cachedTexture: TextureResource?
+
+    private static func getTexture() -> TextureResource? {
+        if let cached = cachedTexture { return cached }
+        guard let cgImage = render()?.cgImage else { return nil }
+        let texture = try? TextureResource(
+            image: cgImage,
+            withName: nil,
+            options: .init(semantic: .color)
+        )
+        cachedTexture = texture
+        return texture
+    }
 
     static func makeEntity() -> ModelEntity? {
-        guard let cgImage = render()?.cgImage else { return nil }
-        do {
-            let texture = try TextureResource(
-                image: cgImage,
-                withName: nil,
-                options: .init(semantic: .color)
-            )
+        if let texture = getTexture() {
             var material = UnlitMaterial()
             material.color = .init(tint: .white, texture: .init(texture))
             material.blending = .transparent(opacity: 1.0)
@@ -36,23 +43,23 @@ enum AnnotationMarker {
             )
             let marker = ModelEntity(mesh: mesh, materials: [material])
             marker.name = entityName
-            marker.generateCollisionShapes(recursive: false)
+            marker.collision = CollisionComponent(
+                shapes: [.generateSphere(radius: 0.16)]
+            )
             return marker
-        } catch {
-            print("[AnnotationMarker] Gagal membuat tekstur: \(error.localizedDescription)")
-            return nil
         }
-    }
 
-    static func makeTapZone() -> ModelEntity {
-        let zone = ModelEntity(
-            mesh: .generateSphere(radius: AnnotationMarkerLayout.tapZoneRadius),
-            materials: [UnlitMaterial(color: .clear)]
+        let mesh = MeshResource.generatePlane(
+            width: AnnotationMarkerLayout.diameter,
+            height: AnnotationMarkerLayout.diameter
         )
-        zone.name = tapZoneName
-        zone.generateCollisionShapes(recursive: false)
-        zone.components.remove(ModelComponent.self)
-        return zone
+        var material = UnlitMaterial(color: .white)
+        let marker = ModelEntity(mesh: mesh, materials: [material])
+        marker.name = entityName
+        marker.collision = CollisionComponent(
+            shapes: [.generateSphere(radius: 0.16)]
+        )
+        return marker
     }
 
     static func isTappable(_ entity: Entity) -> Bool {

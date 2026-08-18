@@ -24,6 +24,12 @@ struct ARViewContainer: UIViewRepresentable {
             return arView
         }
 
+        let tapGesture = UITapGestureRecognizer(
+            target: context.coordinator,
+            action: #selector(context.coordinator.handleTap(_:))
+        )
+        arView.addGestureRecognizer(tapGesture)
+
         Task {
             await ARSceneSetup.setup(arView: arView)
 

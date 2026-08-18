@@ -5,7 +5,6 @@
 //  Created by Gabriella Angelina Widjaja on 17/08/26.
 //
 
-
 import Foundation
 
 @MainActor
@@ -15,13 +14,19 @@ final class GuidedWalkthroughViewModel {
     private(set) var step: GuidedStep = .placePrompt(.findFlat)
     private(set) var progress = GuidedProgress()
     private(set) var feedback: FeedbackPresentation?
+    var isShowingInstruction: Bool = true
 
     @ObservationIgnored weak var bridge: ARGuidedBridge?
     @ObservationIgnored private var isAdvancing = false
-    
+    @ObservationIgnored var onFinished: (() -> Void)?
+
     private static let robotExitDuration: Duration = .milliseconds(450)
 
     var helpText: String { step.helpText }
+
+    func dismissInstruction() {
+        isShowingInstruction = false
+    }
 
     func applyLesson(_ lesson: GuidedLesson, presentation: FeedbackPresentation) {
         feedback = presentation
@@ -49,6 +54,7 @@ final class GuidedWalkthroughViewModel {
         bridge?.dismissFeedbackRobot()
         bridge?.placeAgain()
         step = .placePrompt(progress.prompt)
+        isShowingInstruction = true
     }
 
     func restart() {
@@ -56,6 +62,7 @@ final class GuidedWalkthroughViewModel {
         isAdvancing = false
         feedback = nil
         step = .placePrompt(progress.prompt)
+        isShowingInstruction = true
         bridge?.dismissFeedbackRobot()
         bridge?.placeAgain()
     }
@@ -73,8 +80,10 @@ final class GuidedWalkthroughViewModel {
 
             if self.progress.isFinished {
                 self.step = .finale
+                self.onFinished?()
             } else {
                 self.step = .placePrompt(self.progress.prompt)
+                self.isShowingInstruction = true
                 self.bridge?.placeAgain()
             }
         }

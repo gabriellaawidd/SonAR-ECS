@@ -5,12 +5,6 @@
 //  Created by Gabriella Angelina Widjaja on 17/08/26.
 //
 
-
-//
-//  SpeechBubble.swift
-//  SonAR-ECS
-//
-
 import SwiftUI
 
 struct SpeechBubble: Shape {
@@ -81,8 +75,9 @@ struct SpeechBubbleView: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(AppPalette.ink)
+            .font(Font.body)
+            .fontWeight(.semibold)
+            .foregroundStyle(Color.black)
             .lineSpacing(3)
             .multilineTextAlignment(.leading)
             .fixedSize(horizontal: false, vertical: true)
@@ -92,9 +87,19 @@ struct SpeechBubbleView: View {
             .padding(.leading, 18 + tailWidth)
             .background(
                 SpeechBubble(tailWidth: tailWidth)
-                    .fill(AppPalette.card)
+                    .fill(Color("bgMain"))
                     .shadow(color: .black.opacity(0.18), radius: 14, x: 0, y: 6)
             )
             .accessibilityElement(children: .combine)
+    }
+}
+
+#Preview("Speech Bubbles") {
+    ZStack {
+        Color.gray.opacity(0.3).ignoresSafeArea()
+        VStack(spacing: 20) {
+            SpeechBubbleView(text: "Point at a flat surface and tap to place")
+            SpeechBubbleView(text: "Ooh, too steep! The sound bounced away. Try a smaller tilt!")
+        }
     }
 }

@@ -1,3 +1,10 @@
+//
+//  AppConfig.swift
+//  SonAR-ECS
+//
+//  Created by Gabriella Angelina Widjaja on 16/08/26.
+//
+
 import Foundation
 
 struct AppConfig {

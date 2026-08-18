@@ -1,0 +1,69 @@
+//
+//  ARSceneSetup.swift
+//  SonAR-ECS
+//
+//  Created by Gabriella Angelina Widjaja on 16/08/26.
+//
+
+import RealityKit
+import ARKit
+import SonARAssets
+
+enum ARSceneSetup {
+
+    @MainActor
+    static func setup(arView: ARView) async {
+        var loadedScene: Entity?
+        if let s = try? await Entity(named: "Models/MainScene", in: SonARAssets.sonARAssetsBundle) {
+            loadedScene = s
+        }
+        else if let s = try? await Entity(named: "MainScene", in: SonARAssets.sonARAssetsBundle){
+            loadedScene = s
+        }
+        
+        guard let mainScene = loadedScene else {
+            return
+        }
+
+        let anchor = AnchorEntity(world: matrix_identity_float4x4)
+        anchor.addChild(mainScene)
+        arView.scene.addAnchor(anchor)
+
+        let cameraTracker = Entity()
+        cameraTracker.components.set(CameraTrackingComponent())
+        anchor.addChild(cameraTracker)
+
+        configureSensor(in: mainScene)
+        configureMascot(in: mainScene)
+
+        WaveRenderer.configure(scene: arView.scene)
+    }
+    
+    private static func configureSensor(in scene: Entity) {
+        guard let sensorContainer = scene.findEntity(named: "SensorContainer")
+                ?? scene.findEntity(named: SceneEntityNames.sensorNode) else {
+            return
+        }
+
+        sensorContainer.scale = SIMD3<Float>(repeating: 0.2)
+
+        sensorContainer.components.set(SensorStateComponent())
+        sensorContainer.components.set(SensorPreviewComponent())
+        sensorContainer.components.set(WaveEmitterComponent(pulseInterval: 1.0, elapsedSinceLastPulse: 1.0))
+
+        if let sensor = sensorContainer.findEntity(named: "sensor") ?? sensorContainer.findEntity(named: "SensorNode") {
+            SensorMaterialManager.applyHologram(to: sensor)
+        }
+    }
+
+    private static func configureMascot(in scene: Entity) {
+        guard let mascotNode = scene.findEntity(named: SceneEntityNames.mascotNode)
+                ?? scene.findEntity(named: "MascotNode"),
+              let robotMascot = mascotNode.findEntity(named: SceneEntityNames.robotMascot)
+                ?? mascotNode.findEntity(named: "robot_mascot") else {
+            return
+        }
+
+        robotMascot.isEnabled = false
+    }
+}

@@ -17,37 +17,69 @@ enum FreeExploreCopy {
 }
 
 struct FreeExploreOverlayView: View {
+    let showIntro: Bool
+    let isPlaced: Bool
+    let onDismissIntro: () -> Void
     let onHome: () -> Void
     let onHowItWorks: () -> Void
     let onReposition: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            ToolBarView(
-                onHome: onHome,
-                onHowItWorks: onHowItWorks
-            )
+        ZStack {
+            if showIntro {
+                Color.black.opacity(0.65)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
 
-            MascotPromptView(
-                mascot: MascotAsset.neutral,
-                text: FreeExploreCopy.placePrompt,
-                mascotHeight: 120
-            )
-            .padding(.top, 12)
-            .allowsHitTesting(false)
+            VStack(spacing: 0) {
+                ToolBarView(
+                    onHome: onHome,
+                    onHowItWorks: onHowItWorks
+                )
 
-            Spacer(minLength: 0)
+                if showIntro {
+                    MascotPromptView(
+                        mascot: MascotAsset.neutral,
+                        text: FreeExploreCopy.placePrompt,
+                        mascotHeight: 120
+                    )
+                    .padding(.top, 40)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                }
 
-            CapsuleActionButton(title: FreeExploreCopy.reposition, action: onReposition)
+                Spacer(minLength: 0)
+
+                Group {
+                    if showIntro {
+                        CapsuleActionButton(title: "Continue", action: onDismissIntro)
+                    } else if !isPlaced {
+                        HintCapsule(text: FreeExploreCopy.tapHint)
+                            .allowsHitTesting(false)
+                    } else {
+                        CapsuleActionButton(title: FreeExploreCopy.reposition, action: onReposition)
+                    }
+                }
                 .padding(.bottom, 32)
+                .transition(.opacity)
+            }
+            .padding(.horizontal, 20)
         }
-        .padding(.horizontal, 20)
+        .animation(.easeInOut(duration: 0.28), value: showIntro)
+        .animation(.easeInOut(duration: 0.28), value: isPlaced)
     }
 }
 
 #Preview("Free Explore Overlay") {
     ZStack {
         Color.gray.opacity(0.4).ignoresSafeArea()
-        FreeExploreOverlayView(onHome: {}, onHowItWorks: {}, onReposition: {})
+        FreeExploreOverlayView(
+            showIntro: true,
+            isPlaced: false,
+            onDismissIntro: {},
+            onHome: {},
+            onHowItWorks: {},
+            onReposition: {}
+        )
     }
 }

@@ -25,10 +25,8 @@ struct HomeSelectionView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Latar Belakang Krem
                 Color("bgMain").ignoresSafeArea()
 
-                // Awan Latar
                 VStack {
                     HStack {
                         Image("cloudTop")
@@ -53,7 +51,6 @@ struct HomeSelectionView: View {
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
 
-                    // 🤖 Maskot Robot di Atas Kartu
                     Image("mascotRobot")
                         .resizable()
                         .scaledToFit()
@@ -61,9 +58,7 @@ struct HomeSelectionView: View {
                         .offset(y: 28)
                         .zIndex(1)
 
-                    // Kartu Putih Mode Selection
                     VStack(spacing: 20) {
-                        // Judul SonAR Kompak (42pt)
                         HStack(spacing: 2) {
                             Text("Son")
                                 .foregroundStyle(sonGradient)
@@ -74,22 +69,22 @@ struct HomeSelectionView: View {
                         .padding(.top, 28)
 
                         Text("Learn how a robot sees with\nultrasonic wave")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(.headline)
                             .multilineTextAlignment(.center)
                             .foregroundStyle(Color.black.opacity(0.75))
                             .padding(.horizontal, 24)
 
-                        // ✅ Tombol 1: Guided Tour
                         NavigationLink {
                             SensorIntroView(isGuided: true, appState: $appState)
                         } label: {
-                            HStack(spacing: 12) {
+                            HStack {
                                 Image("quickTour")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 32, height: 32)
+                                    .frame(width: 50, height: 50)
                                 Text("Guided tour")
-                                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
                                     .foregroundStyle(Color("buttonCyan"))
                             }
                             .frame(maxWidth: .infinity)
@@ -101,19 +96,19 @@ struct HomeSelectionView: View {
                             )
                         }
                         .buttonStyle(.plain)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, 28)
 
-                        // ✅ Tombol 2: Free Exploration
                         NavigationLink {
                             SensorIntroView(isGuided: false, appState: $appState)
                         } label: {
-                            HStack(spacing: 12) {
+                            HStack {
                                 Image("freeExplore")
                                     .resizable()
                                     .scaledToFit()
-                                    .frame(width: 32, height: 32)
+                                    .frame(width: 50, height: 50)
                                 Text("Free Exploration")
-                                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
                                     .foregroundStyle(Color("buttonModeText"))
                             }
                             .frame(maxWidth: .infinity)
@@ -125,7 +120,7 @@ struct HomeSelectionView: View {
                             )
                         }
                         .buttonStyle(.plain)
-                        .padding(.horizontal, 24)
+                        .padding(.horizontal, 28)
                         .padding(.bottom, 28)
                     }
                     .background(
@@ -142,6 +137,6 @@ struct HomeSelectionView: View {
     }
 }
 
-#Preview("Home Screen") {
+#Preview() {
     HomeSelectionView(appState: .constant(.home))
 }

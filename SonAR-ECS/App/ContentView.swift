@@ -2,10 +2,11 @@
 //  ContentView.swift
 //  SonAR-ECS
 //
-//  Created by Gabriella Angelina Widjaja on 13/08/26.
+//  Created by Gabriella Angelina Widjaja on 17/08/26.
 //
 
 import SwiftUI
+
 struct ContentView: View {
     @State private var currentAppState: AppState = .splash
     
@@ -14,20 +15,29 @@ struct ContentView: View {
             switch currentAppState {
             case .splash:
                 SplashScreenView(appState: $currentAppState)
-            case .sensorIntro:
-                SensorIntroView(appState: $currentAppState)
-            case .modeSelection:
-                ModeSelectionView(appState: $currentAppState)
+                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+
+            case .home:
+                HomeSelectionView(appState: $currentAppState)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+
             case .guidedWalkthrough:
                 ARContentView(initialMode: .guided, appState: $currentAppState)
+                    .transition(.opacity)
+
             case .freeExplore:
                 ARContentView(initialMode: .freeExplore, appState: $currentAppState)
+                    .transition(.opacity)
+
+            case .sensorIntro:
+                HomeSelectionView(appState: $currentAppState)
             }
         }
-        .animation(.easeInOut, value: currentAppState)
+        .animation(.spring(response: 0.65, dampingFraction: 0.8), value: currentAppState)
         .preferredColorScheme(.light)
     }
 }
-#Preview {
+
+#Preview() {
     ContentView()
 }

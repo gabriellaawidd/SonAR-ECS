@@ -5,7 +5,6 @@
 //  Created by Gabriella Angelina Widjaja on 16/08/26.
 //
 
-
 import ARKit
 import RealityKit
 import simd
@@ -17,10 +16,6 @@ final class PlacementService {
     private let materialDetectionManager = MaterialDetectionManager()
     private weak var guidedBridge: ARGuidedBridge?
 
-    private static let layerConfigs: [(angle: Float, count: Int)] = [
-        (3.75, 8), (7.5, 12), (11.25, 16), (15.0, 20)
-    ]
-
     init(arView: ARView, guidedBridge: ARGuidedBridge) {
         self.arView = arView
         self.guidedBridge = guidedBridge
@@ -29,18 +24,18 @@ final class PlacementService {
 
     @MainActor
     func handleTap(at point: CGPoint) async {
-        guard let arView,
-              let scene = arView.scene as RealityKit.Scene?,
-              let sensor = scene.findEntity(named: SceneEntityNames.sensorNode),
-              var state = sensor.components[SensorStateComponent.self] else { return }
+        guard let arView else { return }
 
-        if state.phase == .placed {
+        guard let sensor = arView.scene.anchors.compactMap({ $0.findEntity(named: "SensorContainer") ?? $0.findEntity(named: SceneEntityNames.sensorNode) }).first else {
             return
         }
 
-        guard let preview = sensor.components[SensorPreviewComponent.self],
-              let finalPosition = preview.lastTargetPosition,
-              let finalOrientation = preview.lastTargetOrientation else { return }
+        var state = sensor.components[SensorStateComponent.self] ?? SensorStateComponent()
+        if state.phase == .placed { return }
+
+        let preview = sensor.components[SensorPreviewComponent.self]
+        let finalPosition = preview?.lastTargetPosition ?? sensor.position(relativeTo: nil)
+        let finalOrientation = preview?.lastTargetOrientation ?? sensor.orientation(relativeTo: nil)
 
         tapFeedback.impactOccurred()
 
@@ -48,6 +43,10 @@ final class PlacementService {
         state.currentLockID = UUID()
         let lockID = state.currentLockID!
         sensor.components[SensorStateComponent.self] = state
+
+        if let sensorMesh = sensor.findEntity(named: "sensor") ?? sensor.findEntity(named: "SensorNode") {
+            SensorMaterialManager.restoreOriginal(to: sensorMesh)
+        }
 
         sensor.components.set(PlacementAnimationComponent(
             finalPosition: finalPosition,
@@ -76,12 +75,31 @@ final class PlacementService {
             )
         }
     }
-
+    
     @MainActor
     func handleMarkerTap(at point: CGPoint) async -> Bool {
         guard let arView else { return false }
 
-        guard let tapped = arView.entity(at: point), AnnotationMarker.isTappable(tapped) else {
+        let samplePoints = [
+            point,
+            CGPoint(x: point.x - 24, y: point.y),
+            CGPoint(x: point.x + 24, y: point.y),
+            CGPoint(x: point.x, y: point.y - 24),
+            CGPoint(x: point.x, y: point.y + 24),
+            CGPoint(x: point.x - 18, y: point.y - 18),
+            CGPoint(x: point.x + 18, y: point.y + 18)
+        ]
+
+        var foundMarkerEntity: Entity? = nil
+        for p in samplePoints {
+            if let entity = arView.entity(at: p) ?? arView.hitTest(p).first?.entity,
+               AnnotationMarker.isTappable(entity) {
+                foundMarkerEntity = entity
+                break
+            }
+        }
+
+        guard let tapped = foundMarkerEntity else {
             return false
         }
 
@@ -94,41 +112,21 @@ final class PlacementService {
             return false
         }
 
-        if let scene = arView.scene as RealityKit.Scene?,
-           let mascotNode = scene.findEntity(named: SceneEntityNames.mascotNode),
-           let robotMascot = mascotNode.findEntity(named: SceneEntityNames.robotMascot) {
+        if let mascotNode = arView.scene.anchors.compactMap({ $0.findEntity(named: SceneEntityNames.mascotNode) ?? $0.findEntity(named: "MascotNode") }).first,
+           let robotMascot = mascotNode.findEntity(named: SceneEntityNames.robotMascot) ?? mascotNode.findEntity(named: "robot_mascot") {
+            mascotNode.isEnabled = true
+            robotMascot.isEnabled = true
             robotMascot.components.set(NeedsMascotFeedback(content: markerComponent.content))
+            marker.removeFromParent()
+            return true
         }
 
-        marker.removeFromParent()
-        return true
+        return false
     }
 
-    private func raycast(from origin: SIMD3<Float>, directions: [SIMD3<Float>], session: ARSession) async -> [RaycastHit?] {
-        await Task.detached(priority: .userInitiated) {
-            directions.map { direction -> RaycastHit? in
-                let query = ARRaycastQuery(
-                    origin: origin,
-                    direction: simd_normalize(direction),
-                    allowing: .estimatedPlane,
-                    alignment: .any
-                )
-                guard let result = session.raycast(query).first else { return nil }
-
-                let worldPosition = SIMD3<Float>(result.worldTransform.columns.3.x, result.worldTransform.columns.3.y, result.worldTransform.columns.3.z)
-                let normal = simd_normalize(SIMD3<Float>(result.worldTransform.columns.1.x, result.worldTransform.columns.1.y, result.worldTransform.columns.1.z))
-
-                return RaycastHit(
-                    worldPosition: worldPosition,
-                    normal: normal,
-                    distance: simd_distance(origin, worldPosition),
-                    screenPoint: nil,
-                    timestamp: session.currentFrame?.timestamp ?? 0,
-                    pixelBuffer: session.currentFrame?.capturedImage
-                )
-            }
-        }.value
-    }
+    private static let layerConfigs: [(angle: Float, count: Int)] = [
+        (3.75, 8), (7.5, 12), (11.25, 16), (15.0, 20)
+    ]
 
     private static func generateConeDirections(orientation: simd_quatf) -> [SIMD3<Float>] {
         var angles: [(Float, SIMD3<Float>)] = [(0, [1, 0, 0])]
@@ -144,18 +142,56 @@ final class PlacementService {
             return (orientation * rotation).act(SIMD3<Float>(0, 0, -1))
         }
     }
+    
+    private func raycast(from origin: SIMD3<Float>, directions: [SIMD3<Float>], session: ARSession) async -> [RaycastHit?] {
+        let timestamp = session.currentFrame?.timestamp ?? 0
+        let pixelBuffer = session.currentFrame?.capturedImage
+
+        return await Task.detached(priority: .userInitiated) {
+            directions.map { direction -> RaycastHit? in
+                let query = ARRaycastQuery(
+                    origin: origin,
+                    direction: simd_normalize(direction),
+                    allowing: .estimatedPlane,
+                    alignment: .any
+                )
+                guard let result = session.raycast(query).first else { return nil }
+
+                let worldPosition = SIMD3<Float>(
+                    result.worldTransform.columns.3.x,
+                    result.worldTransform.columns.3.y,
+                    result.worldTransform.columns.3.z
+                )
+                let normal = simd_normalize(SIMD3<Float>(
+                    result.worldTransform.columns.1.x,
+                    result.worldTransform.columns.1.y,
+                    result.worldTransform.columns.1.z
+                ))
+
+                return RaycastHit(
+                    worldPosition: worldPosition,
+                    normal: normal,
+                    distance: simd_distance(origin, worldPosition),
+                    screenPoint: nil,
+                    timestamp: timestamp,
+                    pixelBuffer: pixelBuffer
+                )
+            }
+        }.value
+    }
 
     private func detectMaterial(pixelBuffer: CVPixelBuffer?, hit: RaycastHit, facingDirection: SIMD3<Float>, sensor: Entity, lockID: UUID) {
-        materialDetectionManager.detect(pixelBuffer: pixelBuffer, hit: hit, facingDirection: facingDirection) { [weak sensor] reading in
-            DispatchQueue.main.async {
-                guard let sensor,
-                      var surface = sensor.components[ReconstructedSurfaceComponent.self],
-                      surface.lockID == lockID else { return }
-
-                surface.materialCategory = reading.materialCategory
-                surface.materialConfidence = reading.materialConfidence
-                sensor.components[ReconstructedSurfaceComponent.self] = surface
-            }
+        guard let pixelBuffer else { return }
+        materialDetectionManager.detect(
+            pixelBuffer: pixelBuffer,
+            hit: hit,
+            facingDirection: facingDirection
+        ) { [weak sensor] reading in
+            guard let sensor,
+                  var surface = sensor.components[ReconstructedSurfaceComponent.self],
+                  surface.lockID == lockID else { return }
+            surface.materialCategory = reading.materialCategory
+            sensor.components[ReconstructedSurfaceComponent.self] = surface
         }
     }
 }

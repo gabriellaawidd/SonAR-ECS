@@ -5,7 +5,6 @@
 //  Created by Gabriella Angelina Widjaja on 17/08/26.
 //
 
-
 //
 //  SensorMaterialManager.swift
 //  SonAR-ECS
@@ -19,7 +18,6 @@ import UIKit
 enum SensorMaterialManager {
     private static var originalMaterials: [ObjectIdentifier: [RealityKit.Material]] = [:]
 
-    // ✨ Material Hologram: Cyan Semi-Transparan Bercahaya
     static let hologramMaterial: RealityKit.Material = {
         var mat = SimpleMaterial()
         mat.color = .init(tint: UIColor(red: 0.0, green: 0.85, blue: 1.0, alpha: 0.48))
@@ -28,30 +26,38 @@ enum SensorMaterialManager {
         return mat
     }()
 
-    /// Ubah semua bagian mesh sensor menjadi Hologram Biru Transparan
+    /// Ubah semua mesh sensor menjadi Hologram Biru Transparan
     static func applyHologram(to entity: Entity) {
         applyRecursively(to: entity, isHologram: true)
     }
 
-    /// Kembalikan tekstur sensor menjadi model fisik padat/asli
     static func restoreOriginal(to entity: Entity) {
         applyRecursively(to: entity, isHologram: false)
     }
 
     private static func applyRecursively(to entity: Entity, isHologram: Bool) {
-        if var model = entity as? ModelEntity {
-            let id = ObjectIdentifier(model)
+        if entity.name == SceneEntityNames.mascotNode
+            || entity.name == SceneEntityNames.robotMascot
+            || entity.name == "MascotNode"
+            || entity.name == "robot_mascot" {
+            return
+        }
+
+        if var modelComponent = entity.components[ModelComponent.self] {
+            let id = ObjectIdentifier(entity)
             if isHologram {
-                if originalMaterials[id] == nil, let current = model.model?.materials {
-                    originalMaterials[id] = current
+                if originalMaterials[id] == nil {
+                    originalMaterials[id] = modelComponent.materials
                 }
-                model.model?.materials = [hologramMaterial]
+                modelComponent.materials = [hologramMaterial]
             } else {
                 if let original = originalMaterials[id] {
-                    model.model?.materials = original
+                    modelComponent.materials = original
                 }
             }
+            entity.components.set(modelComponent)
         }
+
         for child in entity.children {
             applyRecursively(to: child, isHologram: isHologram)
         }

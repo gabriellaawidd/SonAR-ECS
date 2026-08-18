@@ -5,7 +5,6 @@
 //  Created by Gabriella Angelina Widjaja on 17/08/26.
 //
 
-
 //
 //  ARContentView.swift
 //  SonAR-ECS
@@ -58,11 +57,12 @@ struct ARContentView: View {
                 }
             }
 
-            // 2. Overlay HUD sesuai mode aktif
             switch mode {
             case .guided(let guidedVM):
                 GuidedOverlayView(
                     step: guidedVM.step,
+                    isShowingInstruction: guidedVM.isShowingInstruction,
+                    onDismissInstruction: { guidedVM.dismissInstruction() },
                     onHome: { showLeaveConfirm = true },
                     onHowItWorks: { showHowItWorks = true },
                     onContinue: { guidedVM.continueTapped() },
@@ -78,6 +78,9 @@ struct ARContentView: View {
 
             case .freeExplore(let freeVM):
                 FreeExploreOverlayView(
+                    showIntro: freeVM.showIntro,
+                    isPlaced: freeVM.isPlaced,
+                    onDismissIntro: { freeVM.dismissIntro() },
                     onHome: { showLeaveConfirm = true },
                     onHowItWorks: { showHowItWorks = true },
                     onReposition: { freeVM.placeAgain() }
@@ -95,7 +98,7 @@ struct ARContentView: View {
             isPresented: $showLeaveConfirm
         ) {
             Button(GuidedCopy.leaveConfirm, role: .destructive) {
-                appState = .modeSelection
+                appState = .home
             }
             Button(GuidedCopy.cancel, role: .cancel) {
                 showLeaveConfirm = false
@@ -106,6 +109,6 @@ struct ARContentView: View {
     }
 }
 
-#Preview("AR Content View - Guided") {
+#Preview("AR Content View") {
     ARContentView(initialMode: .guided, appState: .constant(.guidedWalkthrough))
 }
