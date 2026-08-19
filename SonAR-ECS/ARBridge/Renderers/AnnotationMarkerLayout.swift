@@ -11,7 +11,7 @@ import simd
 
 enum AnnotationMarkerLayout {
     static let width: Float = 0.052
-    static let tapZoneRadius: Float = 0.05
+    static let tapZoneRadius: Float = 0.13
 
     static let canvasWidth: CGFloat = 402
     static let bodyHeight: CGFloat = 100
@@ -54,6 +54,14 @@ enum AnnotationMarker {
         let marker = ModelEntity(mesh: mesh, materials: [material])
         marker.name = entityName
         marker.generateCollisionShapes(recursive: false)
+
+        let tapZone = Entity()
+        tapZone.name = tapZoneName
+        tapZone.components.set(CollisionComponent(
+            shapes: [.generateSphere(radius: AnnotationMarkerLayout.tapZoneRadius)]
+        ))
+        marker.addChild(tapZone)
+
         return marker
     }
 

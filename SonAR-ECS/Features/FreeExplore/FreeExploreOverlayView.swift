@@ -35,7 +35,7 @@ struct FreeExploreOverlayView: View {
                     onHowItWorks: onHowItWorks
                 )
 
-                if !isPlaced {
+                if showIntro {
                     MascotPromptView(
                         mascot: MascotAsset.neutral,
                         text: FreeExploreCopy.placePrompt,

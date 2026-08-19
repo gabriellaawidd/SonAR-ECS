@@ -11,7 +11,7 @@ import Foundation
 
 struct PlacementAnimationSystem: System {
     private static let query = EntityQuery(where: .has(PlacementAnimationComponent.self))
-    private static let baseScale: Float = 0.2 
+    private static let baseScale: Float = 0.12
 
     init(scene: RealityKit.Scene) {}
 

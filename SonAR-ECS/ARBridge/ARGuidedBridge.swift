@@ -14,6 +14,8 @@ final class ARGuidedBridge {
     private var mode: ARSessionMode
     private var cancellable: AnyCancellable?
     private var hasEvaluatedCurrentPlacement = false
+    private var materialWaitCount = 0
+    private static let maxMaterialWaits = 5
 
     init(scene: RealityKit.Scene, mode: ARSessionMode) {
         self.scene = scene
@@ -54,8 +56,10 @@ final class ARGuidedBridge {
 
     func beginMeasurement() {
         hasEvaluatedCurrentPlacement = false
+        materialWaitCount = 0
         if case .freeExplore(let vm) = mode {
             vm.isPlaced = true
+            vm.showIntro = false
         }
     }
 
@@ -69,6 +73,15 @@ final class ARGuidedBridge {
               let surface = sensor.components[ReconstructedSurfaceComponent.self] else {
             return
         }
+
+        if case .guided(let vm) = mode,
+           vm.progress.usesMaterialDetection,
+           surface.materialCategory == .unknown,
+           materialWaitCount < Self.maxMaterialWaits {
+            materialWaitCount += 1
+            return
+        }
+        materialWaitCount = 0
 
         hasEvaluatedCurrentPlacement = true
 
@@ -127,8 +140,8 @@ final class ARGuidedBridge {
         sensor.components.remove(ReconstructedSurfaceComponent.self)
 
         var preview = sensor.components[SensorPreviewComponent.self] ?? SensorPreviewComponent()
-        preview.lastTargetPosition = nil
-        preview.lastTargetOrientation = nil
+        preview.lastTargetPosition = sensor.position(relativeTo: nil)
+        preview.lastTargetOrientation = sensor.orientation(relativeTo: nil)
         sensor.components[SensorPreviewComponent.self] = preview
 
         SensorMaterialManager.applyHologram(to: sensor)
@@ -139,6 +152,7 @@ final class ARGuidedBridge {
         removeExistingAnnotationMarkers()
         dismissFeedbackRobot()
         hasEvaluatedCurrentPlacement = false
+        materialWaitCount = 0
         if case .freeExplore(let vm) = mode {
             vm.isPlaced = false
         }
@@ -148,11 +162,18 @@ final class ARGuidedBridge {
         guard let scene,
               let mascotNode = scene.anchors.compactMap({ $0.findEntity(named: SceneEntityNames.mascotNode) ?? $0.findEntity(named: "MascotNode") }).first,
               let robotMascot = mascotNode.findEntity(named: SceneEntityNames.robotMascot) ?? mascotNode.findEntity(named: "robot_mascot") else { return }
-        
-        robotMascot.isEnabled = false
-        robotMascot.components.remove(MascotAnimationComponent.self)
+
         robotMascot.components.remove(NeedsMascotFeedback.self)
 
+        if var anim = robotMascot.components[MascotAnimationComponent.self], robotMascot.isEnabled {
+            anim.stage = .leaving
+            anim.elapsed = 0
+            robotMascot.components[MascotAnimationComponent.self] = anim
+            return
+        }
+
+        robotMascot.isEnabled = false
+        robotMascot.components.remove(MascotAnimationComponent.self)
         if let textAnchor = mascotNode.findEntity(named: SceneEntityNames.textAnchor) ?? mascotNode.findEntity(named: "TextAnchor") {
             textAnchor.children.filter { $0.name == "robotHintCard" }.forEach { $0.removeFromParent() }
         }
