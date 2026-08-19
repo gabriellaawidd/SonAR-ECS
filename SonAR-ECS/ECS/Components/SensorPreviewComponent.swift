@@ -10,7 +10,7 @@ import simd
 
 struct SensorPreviewComponent: Component {
     var followDistance: Float = PlacementSolver.previewDistance
-    var smoothing: Float = 0.08 // aslinya 0.06
+    var smoothing: Float = 0.08
     var lastTargetPosition: SIMD3<Float>?
     var lastTargetOrientation: simd_quatf?
 }

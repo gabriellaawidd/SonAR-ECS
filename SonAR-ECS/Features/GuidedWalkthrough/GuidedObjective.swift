@@ -78,7 +78,7 @@ enum GuidedRetryReason: Equatable {
         }
     }
 
-    var mascot: String { MascotAsset.sad }
+    var mascot: String { MascotAsset.neutral }
     var mascotHeight: CGFloat { 96 }
     var actionTitle: String { "Try another spot" }
 }
@@ -100,7 +100,7 @@ enum GuidedStep: Equatable {
 }
 
 enum GuidedCopy {
-    static let finale = "All done! Now you can freely test any surface you want."
+    static let finale = "All done! Now, test any surface!"
     static let leaveTitle = "Leave the Tour?"
     static let leaveMessage = "You'll have to start the tour over next time."
     static let leaveConfirm = "End Tour"

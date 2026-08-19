@@ -1,20 +1,14 @@
-//
-//  ARViewContainer.swift
-//  SonAR-ECS
-//
-//  Created by Gabriella Angelina Widjaja on 16/08/26.
-//
-
 import SwiftUI
 import RealityKit
 import ARKit
 
 struct ARViewContainer: UIViewRepresentable {
     @Binding var mode: ARSessionMode
+    @Binding var isCoachingActive: Bool
     var onPlacementReady: ((PlacementService) -> Void)? = nil
 
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(isCoachingActive: $isCoachingActive)
     }
 
     func makeUIView(context: Context) -> ARView {
@@ -29,10 +23,19 @@ struct ARViewContainer: UIViewRepresentable {
             action: #selector(context.coordinator.handleTap(_:))
         )
         arView.addGestureRecognizer(tapGesture)
-        
-        arView.session.delegate = context.coordinator
+
+        let coachingOverlay = ARCoachingOverlayView()
+        coachingOverlay.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        coachingOverlay.session = arView.session
+        coachingOverlay.goal = .tracking
+        coachingOverlay.activatesAutomatically = true
+        coachingOverlay.delegate = context.coordinator
+        arView.addSubview(coachingOverlay)
+
+        context.coordinator.coachingOverlay = coachingOverlay
         context.coordinator.arView = arView
         context.coordinator.scene = arView.scene
+        arView.session.delegate = context.coordinator
 
         Task {
             await ARSceneSetup.setup(arView: arView)
@@ -55,19 +58,48 @@ struct ARViewContainer: UIViewRepresentable {
         }
     }
 
-    final class Coordinator: NSObject, ARSessionDelegate {
+    final class Coordinator: NSObject, ARSessionDelegate, ARCoachingOverlayViewDelegate {
         weak var arView: ARView?
+        weak var coachingOverlay: ARCoachingOverlayView?
         var placementService: PlacementService?
         var guidedBridge: ARGuidedBridge?
         var scene: RealityKit.Scene?
         private var hasRevealedSensor = false
 
+        @Binding var isCoachingActive: Bool
+        private let darkThreshold: Double = 350.0
+
+        init(isCoachingActive: Binding<Bool>) {
+            self._isCoachingActive = isCoachingActive
+        }
+
+        func coachingOverlayViewWillActivate(_ coachingOverlayView: ARCoachingOverlayView) {
+            DispatchQueue.main.async {
+                self.isCoachingActive = true
+                self.placementService?.isCoachingActive = true
+            }
+        }
+
+        func coachingOverlayViewDidDeactivate(_ coachingOverlayView: ARCoachingOverlayView) {
+            DispatchQueue.main.async {
+                self.isCoachingActive = false
+                self.placementService?.isCoachingActive = false
+            }
+        }
+
         func session(_ session: ARSession, didUpdate frame: ARFrame) {
             arView?.adjustLightingForAmbient(frame: frame)
 
+            if let ambient = frame.lightEstimate?.ambientIntensity {
+                let isTooDark = ambient < darkThreshold
+                if isTooDark && !(coachingOverlay?.isActive ?? false) {
+                    coachingOverlay?.setActive(true, animated: true)
+                }
+            }
+
             guard !hasRevealedSensor else { return }
             hasRevealedSensor = true
-            
+
             if let sensor = scene?.findEntity(named: "SensorContainer") ?? scene?.findEntity(named: "SensorNode") {
                 sensor.isEnabled = true
             }

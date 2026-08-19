@@ -44,6 +44,7 @@ final class ARGuidedBridge {
     func switchToFreeExplore(_ viewModel: FreeExploreViewModel) {
         self.mode = .freeExplore(viewModel)
         viewModel.bridge = self
+        placeAgain()
     }
 
     private func subscribe() {
@@ -105,8 +106,6 @@ final class ARGuidedBridge {
                 
             case .retry(let reason):
                 vm.applyRetry(reason)
-                let presentation = FeedbackPresentation.retry(reason: reason, report: report)
-                sendMascotFeedback(presentation)
             }
 
         case .freeExplore:

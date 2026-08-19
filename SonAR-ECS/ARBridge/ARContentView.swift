@@ -24,6 +24,7 @@ struct ARContentView: View {
     @State private var mode: ARSessionMode
     @State private var placementService: PlacementService?
     @State private var showHowItWorks = false
+    @State private var isCoachingActive = false
 
     init(initialMode: InitialARMode, appState: Binding<AppState>) {
         self.initialMode = initialMode
@@ -41,11 +42,12 @@ struct ARContentView: View {
 
     var body: some View {
         ZStack {
-            ARViewContainer(mode: $mode) { service in
+            ARViewContainer(mode: $mode, isCoachingActive: $isCoachingActive) { service in
                 self.placementService = service
             }
             .ignoresSafeArea()
             .onTapGesture { location in
+                guard !isCoachingActive else { return }
                 Task {
                     guard let placementService else { return }
                     let markerHandled = await placementService.handleMarkerTap(at: location)
@@ -60,6 +62,7 @@ struct ARContentView: View {
                 GuidedOverlayView(
                     step: guidedVM.step,
                     isShowingInstruction: guidedVM.isShowingInstruction,
+                    isCoachingActive: isCoachingActive,
                     onDismissInstruction: { guidedVM.dismissInstruction() },
                     onHome: { appState = .home },
                     onHowItWorks: { showHowItWorks = true },
@@ -78,6 +81,7 @@ struct ARContentView: View {
                 FreeExploreOverlayView(
                     showIntro: freeVM.showIntro,
                     isPlaced: freeVM.isPlaced,
+                    isCoachingActive: isCoachingActive,
                     onDismissIntro: { freeVM.dismissIntro() },
                     onHome: { appState = .home },
                     onHowItWorks: { showHowItWorks = true },

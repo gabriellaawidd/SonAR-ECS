@@ -42,7 +42,7 @@ enum PlacementSolver {
         )
     }
 
-    static func lerpFactor(deltaTime: Float, smoothing: Float = 0.0008) -> Float {
+    static func lerpFactor(deltaTime: Float, smoothing: Float = 0.08) -> Float {
         1 - pow(smoothing, max(deltaTime, 0.0001))
     }
 

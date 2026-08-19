@@ -20,6 +20,7 @@ enum FreeExploreCopy {
 struct FreeExploreOverlayView: View {
     let showIntro: Bool
     let isPlaced: Bool
+    let isCoachingActive: Bool
     let onDismissIntro: () -> Void
     let onHome: () -> Void
     let onHowItWorks: () -> Void
@@ -49,8 +50,10 @@ struct FreeExploreOverlayView: View {
 
                 Group {
                     if !isPlaced {
-                        HintCapsule(text: FreeExploreCopy.tapHint)
-                            .allowsHitTesting(false)
+                        if !isCoachingActive {
+                            HintCapsule(text: FreeExploreCopy.tapHint)
+                                .allowsHitTesting(false)
+                        }
                     } else {
                         CapsuleActionButton(title: FreeExploreCopy.reposition, action: onReposition)
                     }
@@ -83,6 +86,7 @@ struct FreeExploreOverlayView: View {
         FreeExploreOverlayView(
             showIntro: true,
             isPlaced: false,
+            isCoachingActive: false,
             onDismissIntro: {},
             onHome: {},
             onHowItWorks: {},

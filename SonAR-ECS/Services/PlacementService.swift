@@ -15,6 +15,7 @@ final class PlacementService {
     private let tapFeedback = UIImpactFeedbackGenerator(style: .light)
     private let materialDetectionManager = MaterialDetectionManager()
     private weak var guidedBridge: ARGuidedBridge?
+    var isCoachingActive: Bool = false
 
     init(arView: ARView, guidedBridge: ARGuidedBridge) {
         self.arView = arView
@@ -24,6 +25,7 @@ final class PlacementService {
 
     @MainActor
     func handleTap(at point: CGPoint) async {
+        guard !isCoachingActive else { return }
         guard let arView else { return }
 
         guard let sensor = arView.scene.anchors.compactMap({ $0.findEntity(named: "SensorContainer") ?? $0.findEntity(named: SceneEntityNames.sensorNode) }).first else {

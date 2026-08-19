@@ -10,6 +10,7 @@ import SwiftUI
 struct GuidedOverlayView: View {
     let step: GuidedStep
     let isShowingInstruction: Bool
+    let isCoachingActive: Bool
     let onDismissInstruction: () -> Void
 
     let onHome: () -> Void
@@ -43,6 +44,14 @@ struct GuidedOverlayView: View {
                         mascot: prompt.mascot,
                         text: prompt.bubbleText,
                         mascotHeight: prompt.mascotHeight
+                    )
+                    .padding(.top, 40)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                } else if case .retry(let reason) = step {
+                    MascotPromptView(
+                        mascot: reason.mascot,
+                        text: reason.bubbleText,
+                        mascotHeight: reason.mascotHeight
                     )
                     .padding(.top, 40)
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
@@ -104,8 +113,10 @@ struct GuidedOverlayView: View {
             } else {
                 switch step {
                 case .placePrompt(let prompt):
-                    HintCapsule(text: prompt.footerHint)
-                        .allowsHitTesting(false)
+                    if !isCoachingActive {
+                        HintCapsule(text: prompt.footerHint)
+                            .allowsHitTesting(false)
+                    }
 
                 case .retry(let reason):
                     CapsuleActionButton(title: reason.actionTitle, action: onRetry)
@@ -129,6 +140,7 @@ struct GuidedOverlayView: View {
         GuidedOverlayView(
             step: .placePrompt(.findFlat),
             isShowingInstruction: true,
+            isCoachingActive: false,
             onDismissInstruction: {},
             onHome: {},
             onHowItWorks: {},

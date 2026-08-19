@@ -46,22 +46,22 @@ struct FeedbackPresentation: Equatable {
         )
     }
 
-    static func retry(reason: GuidedRetryReason, report: PulseReport?) -> FeedbackPresentation {
-        let badge: String
-        let color: UIColor
-        switch reason {
-        case .notSoft:
-            badge = "HARD SURFACE"
-            color = UIColor(AppPalette.statusOrange)
-        case .tooSteep, .notSteepEnough:
-            badge = GuidedLesson.bounceAway.badge
-            color = UIColor(GuidedLesson.bounceAway.badgeColor)
-        }
-        return FeedbackPresentation(
-            badge: badge,
-            message: reason.bubbleText,
-            distanceText: nil,
-            badgeColor: color
-        )
-    }
+//    static func retry(reason: GuidedRetryReason, report: PulseReport?) -> FeedbackPresentation {
+//        let badge: String
+//        let color: UIColor
+//        switch reason {
+//        case .notSoft:
+//            badge = "HARD SURFACE"
+//            color = UIColor(AppPalette.statusOrange)
+//        case .tooSteep, .notSteepEnough:
+//            badge = GuidedLesson.bounceAway.badge
+//            color = UIColor(GuidedLesson.bounceAway.badgeColor)
+//        }
+//        return FeedbackPresentation(
+//            badge: badge,
+//            message: reason.bubbleText,
+//            distanceText: nil,
+//            badgeColor: color
+//        )
+//    }
 }
