@@ -38,6 +38,7 @@ enum ARSceneSetup {
         }
 
         sensorContainer.scale = SIMD3<Float>(repeating: 0.2)
+        sensorContainer.isEnabled = false
 
         sensorContainer.components.set(SensorStateComponent())
         sensorContainer.components.set(SensorPreviewComponent())

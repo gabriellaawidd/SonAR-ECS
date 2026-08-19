@@ -29,6 +29,8 @@ struct ARViewContainer: UIViewRepresentable {
             action: #selector(context.coordinator.handleTap(_:))
         )
         arView.addGestureRecognizer(tapGesture)
+        arView.session.delegate = context.coordinator
+        context.coordinator.scene = arView.scene
 
         Task {
             await ARSceneSetup.setup(arView: arView)
@@ -51,9 +53,21 @@ struct ARViewContainer: UIViewRepresentable {
         }
     }
 
-    final class Coordinator: NSObject {
+    final class Coordinator: NSObject, ARSessionDelegate {
         var placementService: PlacementService?
         var guidedBridge: ARGuidedBridge?
+        var scene: RealityKit.Scene?
+        private var hasRevealedSensor = false
+
+        func session(_ session: ARSession, didUpdate frame: ARFrame) {
+            guard !hasRevealedSensor else { return }
+            hasRevealedSensor = true
+            
+            // Unhide sensor once we have actual camera frames
+            if let sensor = scene?.findEntity(named: "SensorContainer") ?? scene?.findEntity(named: "SensorNode") {
+                sensor.isEnabled = true
+            }
+        }
 
         @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
             guard let arView = recognizer.view as? ARView else { return }
