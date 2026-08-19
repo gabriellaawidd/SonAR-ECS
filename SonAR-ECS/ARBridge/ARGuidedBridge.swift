@@ -74,7 +74,6 @@ final class ARGuidedBridge {
             return
         }
 
-<<<<<<< Updated upstream
         if case .guided(let vm) = mode,
            vm.progress.usesMaterialDetection,
            surface.materialCategory == .unknown,
@@ -83,13 +82,6 @@ final class ARGuidedBridge {
             return
         }
         materialWaitCount = 0
-=======
-        // Jika objektif saat ini membutuhkan deteksi material (Lesson: Soft),
-        // tunggu hingga hasil Vision classifier selesai dievaluasi (isMaterialEvaluated = true).
-        if case .guided(let vm) = mode, vm.progress.usesMaterialDetection, !surface.isMaterialEvaluated {
-            return
-        }
->>>>>>> Stashed changes
 
         hasEvaluatedCurrentPlacement = true
 
