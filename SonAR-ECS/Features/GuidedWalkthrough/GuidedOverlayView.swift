@@ -18,6 +18,8 @@ struct GuidedOverlayView: View {
     let onRetry: () -> Void
     let onFinish: () -> Void
 
+    @State private var showLeaveConfirm = false
+
     var body: some View {
         ZStack {
             if isShowingInstruction {
@@ -27,7 +29,10 @@ struct GuidedOverlayView: View {
             }
 
             VStack(spacing: 0) {
-                ToolBarView(onHome: onHome, onHowItWorks: onHowItWorks)
+                ToolBarView(
+                    onHome: { showLeaveConfirm = true },
+                    onHowItWorks: onHowItWorks
+                )
 
                 if isShowingInstruction {
                     instructionHeader
@@ -59,6 +64,19 @@ struct GuidedOverlayView: View {
         }
         .animation(.easeInOut(duration: 0.28), value: isShowingInstruction)
         .animation(.easeInOut(duration: 0.28), value: step)
+        .alert(
+            GuidedCopy.leaveTitle,
+            isPresented: $showLeaveConfirm
+        ) {
+            Button(GuidedCopy.leaveConfirm, role: .destructive) {
+                onHome()
+            }
+            Button(GuidedCopy.cancel, role: .cancel) {
+                showLeaveConfirm = false
+            }
+        } message: {
+            Text(GuidedCopy.leaveMessage)
+        }
     }
 
     @ViewBuilder
