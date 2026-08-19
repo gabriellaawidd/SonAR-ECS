@@ -49,8 +49,7 @@ final class MaterialVisionClassifier {
                     self.finish(.init(category: .unknown, topLabel: nil, confidence: 0), completion)
                     return
                 }
-//                let mapped = self.mapToCategory(label: topResult.identifier, confidence: topResult.confidence)
-                let mapped = self.pickBestMatch(from: observations)
+                let mapped = self.mapToCategory(label: topResult.identifier, confidence: topResult.confidence)
                 self.finish(mapped, completion)
             } catch {
                 self.finish(.init(category: .unknown, topLabel: nil, confidence: 0), completion)
@@ -58,19 +57,6 @@ final class MaterialVisionClassifier {
         }
     }
 
-    private static let topNCandidates = 5
-    
-    private func pickBestMatch(from observations: [VNClassificationObservation]) -> MaterialClassificationResult {
-        for candidate in observations.prefix(Self.topNCandidates) {
-            let result = mapToCategory(label: candidate.identifier, confidence: candidate.confidence)
-            if result.category == .soft || result.category == .hard {
-                return result
-            }
-        }
-        let top = observations[0]
-        return mapToCategory(label: top.identifier, confidence: top.confidence)
-    }
-    
     private func boundingBoxIsDominant(_ box: CGRect) -> Bool {
         let area = box.width * box.height
         return Float(area) >= AppConfig.humanDominanceAreaThreshold
