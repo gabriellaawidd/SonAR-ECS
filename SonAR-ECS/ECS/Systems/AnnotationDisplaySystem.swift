@@ -12,9 +12,10 @@ import Foundation
 struct AnnotationDisplaySystem: System {
     private static let needsDisplayQuery = EntityQuery(where: .has(NeedsAnnotationDisplay.self))
     private static let existingMarkerQuery = EntityQuery(where: .has(AnnotationMarkerComponent.self))
+    private static let cameraQuery = EntityQuery(where: .has(CameraTrackingComponent.self))
 
-    private static let heightAboveSensor: Float = 0.08
-    private static let bobHeight: Float = 0.008
+    private static let heightAboveSensor: Float = 0.045
+    private static let bobHeight: Float = 0.006
     private static let bobDuration: TimeInterval = 0.9
 
     init(scene: RealityKit.Scene) {}
@@ -28,17 +29,34 @@ struct AnnotationDisplaySystem: System {
             }
 
             if let marker = AnnotationMarker.makeEntity() {
-                let sensorOrientation = entity.orientation(relativeTo: nil)
-                let sensorForward = sensorOrientation.act(SIMD3<Float>(0, 0, -1))
-                let towardsUser = -sensorForward
-
-                let worldPosition = needs.hitPosition
+                let sensorWorldPos = entity.position(relativeTo: nil)
+                let worldPosition = sensorWorldPos
                     + SIMD3<Float>(0, Self.heightAboveSensor, 0)
-                    + towardsUser * 0.08
 
                 if let anchor = context.scene.anchors.first {
                     anchor.addChild(marker)
                     marker.setPosition(worldPosition, relativeTo: nil)
+                }
+
+                if let cameraEntity = Array(context.entities(matching: Self.cameraQuery, updatingSystemWhen: .rendering)).first,
+                   let camera = cameraEntity.components[CameraTrackingComponent.self] {
+                    let camPos = SIMD3<Float>(
+                        camera.worldTransform.columns.3.x,
+                        camera.worldTransform.columns.3.y,
+                        camera.worldTransform.columns.3.z
+                    )
+                    let delta = camPos - marker.position(relativeTo: nil)
+                    let horizontal = sqrt(delta.x * delta.x + delta.z * delta.z)
+                    if horizontal > 1e-4 {
+                        let dir = SIMD3<Float>(delta.x / horizontal, 0, delta.z / horizontal)
+                        let worldUp = SIMD3<Float>(0, 1, 0)
+                        var right = simd_cross(worldUp, dir)
+                        if simd_length_squared(right) > 1e-6 {
+                            right = simd_normalize(right)
+                            let up = simd_normalize(simd_cross(dir, right))
+                            marker.setOrientation(simd_quatf(simd_float3x3(right, up, dir)), relativeTo: nil)
+                        }
+                    }
                 }
 
                 marker.components.set(AnnotationMarkerComponent(content: needs.content))

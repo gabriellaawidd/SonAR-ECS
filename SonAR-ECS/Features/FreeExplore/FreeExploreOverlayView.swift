@@ -26,19 +26,13 @@ struct FreeExploreOverlayView: View {
 
     var body: some View {
         ZStack {
-            if showIntro {
-                Color.black.opacity(0.65)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-            }
-
             VStack(spacing: 0) {
                 ToolBarView(
                     onHome: onHome,
                     onHowItWorks: onHowItWorks
                 )
 
-                if showIntro {
+                if !isPlaced {
                     MascotPromptView(
                         mascot: MascotAsset.neutral,
                         text: FreeExploreCopy.placePrompt,
@@ -51,9 +45,7 @@ struct FreeExploreOverlayView: View {
                 Spacer(minLength: 0)
 
                 Group {
-                    if showIntro {
-                        CapsuleActionButton(title: "Continue", action: onDismissIntro)
-                    } else if !isPlaced {
+                    if !isPlaced {
                         HintCapsule(text: FreeExploreCopy.tapHint)
                             .allowsHitTesting(false)
                     } else {
@@ -65,7 +57,6 @@ struct FreeExploreOverlayView: View {
             }
             .padding(.horizontal, 20)
         }
-        .animation(.easeInOut(duration: 0.28), value: showIntro)
         .animation(.easeInOut(duration: 0.28), value: isPlaced)
     }
 }

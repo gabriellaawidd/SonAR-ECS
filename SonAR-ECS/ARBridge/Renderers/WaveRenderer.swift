@@ -55,6 +55,7 @@ enum WaveRenderer {
     ) {
         if simd_distance(start, end) < 0.001 { return }
         guard let pulse = makeArrowFromRCP(color: color, opacity: opacity) else { return }
+        pulse.name = "wavePulse"
 
         pulse.position = anchor.convert(position: start, from: nil)
         pulse.look(at: end, from: start, relativeTo: nil)
@@ -64,6 +65,8 @@ enum WaveRenderer {
 
         pulse.scale = SIMD3<Float>(repeating: scale)
         anchor.addChild(pulse)
+        // Collision agar pulse gelombang bisa di-tap untuk memunculkan robot.
+        pulse.generateCollisionShapes(recursive: true)
 
         let targetPosition = anchor.convert(position: end, from: nil)
         var targetTransform = pulse.transform

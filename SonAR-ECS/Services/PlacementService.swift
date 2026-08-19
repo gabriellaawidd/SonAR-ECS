@@ -99,7 +99,7 @@ final class PlacementService {
             }
         }
 
-        guard let tapped = foundMarkerEntity else {
+        guard let tapped = foundMarkerEntity ?? sensorOrWaveTapMarkerProxy(at: samplePoints) else {
             return false
         }
 
@@ -107,21 +107,67 @@ final class PlacementService {
         while let node = markerEntity, node.components[AnnotationMarkerComponent.self] == nil {
             markerEntity = node.parent
         }
-        guard let marker = markerEntity,
+
+        let marker = markerEntity?.components[AnnotationMarkerComponent.self] != nil
+            ? markerEntity
+            : activeAnnotationMarker()
+
+        guard let marker,
               let markerComponent = marker.components[AnnotationMarkerComponent.self] else {
             return false
         }
 
-        if let mascotNode = arView.scene.anchors.compactMap({ $0.findEntity(named: SceneEntityNames.mascotNode) ?? $0.findEntity(named: "MascotNode") }).first,
-           let robotMascot = mascotNode.findEntity(named: SceneEntityNames.robotMascot) ?? mascotNode.findEntity(named: "robot_mascot") {
-            mascotNode.isEnabled = true
-            robotMascot.isEnabled = true
-            robotMascot.components.set(NeedsMascotFeedback(content: markerComponent.content))
-            marker.removeFromParent()
-            return true
+        return spawnRobot(with: markerComponent.content, removing: marker)
+    }
+
+    @MainActor
+    private func activeAnnotationMarker() -> Entity? {
+        guard let arView else { return nil }
+        let query = EntityQuery(where: .has(AnnotationMarkerComponent.self))
+        return Array(arView.scene.performQuery(query)).first
+    }
+
+    @MainActor
+    private func sensorOrWaveTapMarkerProxy(at samplePoints: [CGPoint]) -> Entity? {
+        guard let arView, activeAnnotationMarker() != nil else { return nil }
+
+        for p in samplePoints {
+            guard let entity = arView.entity(at: p) ?? arView.hitTest(p).first?.entity else { continue }
+            if isSensorOrWave(entity) {
+                return entity
+            }
+        }
+        return nil
+    }
+
+    private func isSensorOrWave(_ entity: Entity) -> Bool {
+        var current: Entity? = entity
+        while let node = current {
+            let name = node.name
+            if name == "wavePulse"
+                || name == "SensorContainer"
+                || name == SceneEntityNames.sensorNode
+                || name == "sensor" {
+                return true
+            }
+            current = node.parent
+        }
+        return false
+    }
+
+    @MainActor
+    private func spawnRobot(with content: FeedbackPresentation, removing marker: Entity) -> Bool {
+        guard let arView,
+              let mascotNode = arView.scene.anchors.compactMap({ $0.findEntity(named: SceneEntityNames.mascotNode) ?? $0.findEntity(named: "MascotNode") }).first,
+              let robotMascot = mascotNode.findEntity(named: SceneEntityNames.robotMascot) ?? mascotNode.findEntity(named: "robot_mascot") else {
+            return false
         }
 
-        return false
+        mascotNode.isEnabled = true
+        robotMascot.isEnabled = true
+        robotMascot.components.set(NeedsMascotFeedback(content: content))
+        marker.removeFromParent()
+        return true
     }
 
     private static let layerConfigs: [(angle: Float, count: Int)] = [

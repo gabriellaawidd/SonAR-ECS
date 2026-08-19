@@ -33,6 +33,14 @@ struct GuidedOverlayView: View {
                     instructionHeader
                         .padding(.top, 40)
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                } else if case .placePrompt(let prompt) = step, !prompt.needsBriefing {
+                    MascotPromptView(
+                        mascot: prompt.mascot,
+                        text: prompt.bubbleText,
+                        mascotHeight: prompt.mascotHeight
+                    )
+                    .padding(.top, 40)
+                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 } else if case .finale = step {
                     MascotPromptView(
                         mascot: MascotAsset.neutral,

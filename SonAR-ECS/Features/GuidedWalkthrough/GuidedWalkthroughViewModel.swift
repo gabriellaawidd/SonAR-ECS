@@ -14,7 +14,7 @@ final class GuidedWalkthroughViewModel {
     private(set) var step: GuidedStep = .placePrompt(.findFlat)
     private(set) var progress = GuidedProgress()
     private(set) var feedback: FeedbackPresentation?
-    var isShowingInstruction: Bool = true
+    var isShowingInstruction: Bool = GuidedProgress().prompt.needsBriefing
 
     @ObservationIgnored weak var bridge: ARGuidedBridge?
     @ObservationIgnored private var isAdvancing = false
@@ -53,18 +53,22 @@ final class GuidedWalkthroughViewModel {
     func retryTapped() {
         bridge?.dismissFeedbackRobot()
         bridge?.placeAgain()
-        step = .placePrompt(progress.prompt)
-        isShowingInstruction = true
+        enterPlacePrompt()
     }
 
     func restart() {
         progress.reset()
         isAdvancing = false
         feedback = nil
-        step = .placePrompt(progress.prompt)
-        isShowingInstruction = true
+        enterPlacePrompt()
         bridge?.dismissFeedbackRobot()
         bridge?.placeAgain()
+    }
+
+    private func enterPlacePrompt() {
+        let prompt = progress.prompt
+        step = .placePrompt(prompt)
+        isShowingInstruction = prompt.needsBriefing
     }
 
     private func advanceFromFeedback() {
@@ -82,8 +86,7 @@ final class GuidedWalkthroughViewModel {
                 self.step = .finale
                 self.onFinished?()
             } else {
-                self.step = .placePrompt(self.progress.prompt)
-                self.isShowingInstruction = true
+                self.enterPlacePrompt()
                 self.bridge?.placeAgain()
             }
         }

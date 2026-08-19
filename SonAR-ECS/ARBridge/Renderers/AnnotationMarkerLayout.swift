@@ -10,55 +10,50 @@ import UIKit
 import simd
 
 enum AnnotationMarkerLayout {
-    static let diameter: Float = 0.05
-    static let tapZoneRadius: Float = 0.10
+    static let width: Float = 0.052
+    static let tapZoneRadius: Float = 0.05
+
+    static let canvasWidth: CGFloat = 402
+    static let bodyHeight: CGFloat = 100
+    static let tailHeight: CGFloat = 37
+    static let tailHalfWidth: CGFloat = 26
+    static let cornerRadius: CGFloat = 26
+
+    static var aspect: Float {
+        Float((bodyHeight + tailHeight) / canvasWidth)
+    }
 }
 
 enum AnnotationMarker {
     static let entityName = "annotationMarker"
     static let tapZoneName = "annotationTapZone"
-    private static var cachedTexture: TextureResource?
 
-    private static func getTexture() -> TextureResource? {
-        if let cached = cachedTexture { return cached }
-        guard let cgImage = render()?.cgImage else { return nil }
+    static func makeEntity() -> ModelEntity? {
+        guard let image = render(), let cgImage = image.cgImage else { return nil }
+
         let texture = try? TextureResource(
             image: cgImage,
             withName: nil,
             options: .init(semantic: .color)
         )
-        cachedTexture = texture
-        return texture
-    }
 
-    static func makeEntity() -> ModelEntity? {
-        if let texture = getTexture() {
-            var material = UnlitMaterial()
+        var material = UnlitMaterial()
+        if let texture {
             material.color = .init(tint: .white, texture: .init(texture))
-            material.blending = .transparent(opacity: 1.0)
-            material.faceCulling = .none
-            let mesh = MeshResource.generatePlane(
-                width: AnnotationMarkerLayout.diameter,
-                height: AnnotationMarkerLayout.diameter
-            )
-            let marker = ModelEntity(mesh: mesh, materials: [material])
-            marker.name = entityName
-            marker.collision = CollisionComponent(
-                shapes: [.generateSphere(radius: 0.16)]
-            )
-            return marker
+        } else {
+            material.color = .init(tint: .white)
         }
+        material.blending = .transparent(opacity: 1.0)
+        material.faceCulling = .none
 
+        let aspect = Float(image.size.height / image.size.width)
         let mesh = MeshResource.generatePlane(
-            width: AnnotationMarkerLayout.diameter,
-            height: AnnotationMarkerLayout.diameter
+            width: AnnotationMarkerLayout.width,
+            height: AnnotationMarkerLayout.width * aspect
         )
-        var material = UnlitMaterial(color: .white)
         let marker = ModelEntity(mesh: mesh, materials: [material])
         marker.name = entityName
-        marker.collision = CollisionComponent(
-            shapes: [.generateSphere(radius: 0.16)]
-        )
+        marker.generateCollisionShapes(recursive: false)
         return marker
     }
 
@@ -74,32 +69,69 @@ enum AnnotationMarker {
     }
 
     private static func render() -> UIImage? {
-        let side: CGFloat = 240
-        let size = CGSize(width: side, height: side)
+        let w = AnnotationMarkerLayout.canvasWidth
+        let h = AnnotationMarkerLayout.bodyHeight
+        let tailHeight = AnnotationMarkerLayout.tailHeight
+        let tailHalfWidth = AnnotationMarkerLayout.tailHalfWidth
+        let r = min(AnnotationMarkerLayout.cornerRadius, min(w, h) / 2)
+
+        let size = CGSize(width: w, height: h + tailHeight)
         let format = UIGraphicsImageRendererFormat.default()
         format.opaque = false
         format.scale = 1
+
         return UIGraphicsImageRenderer(size: size, format: format).image { context in
-            let inset: CGFloat = 12
-            let circle = CGRect(origin: .zero, size: size).insetBy(dx: inset, dy: inset)
-            context.cgContext.setShadow(
-                offset: .zero,
-                blur: 18,
-                color: UIColor.black.withAlphaComponent(0.35).cgColor
+            let tipX = w / 2
+            let tipY = h + tailHeight
+            let baseLeft = tipX - tailHalfWidth
+            let baseRight = tipX + tailHalfWidth
+
+            let bubble = UIBezierPath()
+            bubble.move(to: CGPoint(x: r, y: 0))
+            bubble.addLine(to: CGPoint(x: w - r, y: 0))
+            bubble.addArc(
+                withCenter: CGPoint(x: w - r, y: r), radius: r,
+                startAngle: -.pi / 2, endAngle: 0, clockwise: true
             )
-            UIColor.white.setFill()
-            UIBezierPath(ovalIn: circle).fill()
+            bubble.addLine(to: CGPoint(x: w, y: h - r))
+            bubble.addArc(
+                withCenter: CGPoint(x: w - r, y: h - r), radius: r,
+                startAngle: 0, endAngle: .pi / 2, clockwise: true
+            )
+            bubble.addLine(to: CGPoint(x: baseRight, y: h))
+            bubble.addLine(to: CGPoint(x: tipX, y: tipY))
+            bubble.addLine(to: CGPoint(x: baseLeft, y: h))
+            bubble.addLine(to: CGPoint(x: r, y: h))
+            bubble.addArc(
+                withCenter: CGPoint(x: r, y: h - r), radius: r,
+                startAngle: .pi / 2, endAngle: .pi, clockwise: true
+            )
+            bubble.addLine(to: CGPoint(x: 0, y: r))
+            bubble.addArc(
+                withCenter: CGPoint(x: r, y: r), radius: r,
+                startAngle: .pi, endAngle: 3 * .pi / 2, clockwise: true
+            )
+            bubble.close()
+
+            context.cgContext.setShadow(
+                offset: CGSize(width: 0, height: 4),
+                blur: 14,
+                color: UIColor.black.withAlphaComponent(0.25).cgColor
+            )
+            UIColor(red: 0xF7 / 255, green: 0xF4 / 255, blue: 0xEE / 255, alpha: 1).setFill()
+            bubble.fill()
             context.cgContext.setShadow(offset: .zero, blur: 0, color: nil)
+
             let text = "?" as NSString
             let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 128, weight: .bold),
+                .font: UIFont.systemFont(ofSize: 58, weight: .bold),
                 .foregroundColor: UIColor.black
             ]
             let textSize = text.size(withAttributes: attributes)
             text.draw(
                 at: CGPoint(
-                    x: circle.midX - textSize.width / 2,
-                    y: circle.midY - textSize.height / 2
+                    x: w / 2 - textSize.width / 2,
+                    y: h / 2 - textSize.height / 2
                 ),
                 withAttributes: attributes
             )

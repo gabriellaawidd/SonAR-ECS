@@ -84,21 +84,26 @@ final class ARGuidedBridge {
             let resolution = vm.recordOutcome(outcome)
             switch resolution {
             case .lesson(let lesson):
-                let presentation = FeedbackPresentation(lesson: lesson, report: report)
+                let presentation = (lesson == .absorbed)
+                    ? FeedbackPresentation.soft(report: report)
+                    : FeedbackPresentation(lesson: lesson, report: report)
                 vm.applyLesson(lesson, presentation: presentation)
                 sendMascotFeedback(presentation)
                 
             case .retry(let reason):
                 vm.applyRetry(reason)
-                let presentation = FeedbackPresentation(lesson: outcome.lesson, report: report)
+                let presentation = (outcome == .absorbed)
+                    ? FeedbackPresentation.soft(report: report)
+                    : FeedbackPresentation(lesson: outcome.lesson, report: report)
                 sendMascotFeedback(presentation)
             }
 
         case .freeExplore:
             outcome = surface.materialCategory == .soft ? .absorbed
                 : (report.isBounceBack ? .bounceBack : .bounceAway)
-            let lesson = outcome.lesson
-            let presentation = FeedbackPresentation(lesson: lesson, report: report)
+            let presentation = (outcome == .absorbed)
+                ? FeedbackPresentation.soft(report: report)
+                : FeedbackPresentation(lesson: outcome.lesson, report: report)
             let sensorWorldPos = sensor.position(relativeTo: nil)
             let sensorForward = sensor.orientation(relativeTo: nil).act(SIMD3<Float>(0, 0, -1))
             let fallbackPos = sensorWorldPos + sensorForward * 0.5

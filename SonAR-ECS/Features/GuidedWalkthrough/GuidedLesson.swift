@@ -5,36 +5,44 @@
 //  Created by Gabriella Angelina Widjaja on 15/08/26.
 //
 
-import Foundation
+import SwiftUI
 
 enum GuidedLesson: String, CaseIterable, Equatable {
     case bounceBack
     case bounceAway
     case absorbed
-    
+
     var reportsDistance: Bool {
         switch self {
         case .bounceBack: return true
         case .bounceAway, .absorbed: return false
         }
     }
-    
+
     var badge: String {
         switch self {
-        case .bounceBack: return "ECHO DETECTED"
-        case .bounceAway: return "SIGNAL LOST"
-        case .absorbed: return "WEAK ECHO"
+        case .bounceBack: return "WAVE RETURNED!"
+        case .bounceAway: return "WAVE LOST"
+        case .absorbed: return "WEAK SOUNDWAVE"
         }
     }
-    
+
+    var badgeColor: Color {
+        switch self {
+        case .bounceBack: return AppPalette.statusGreen
+        case .bounceAway: return AppPalette.statusRed
+        case .absorbed: return AppPalette.statusOrange
+        }
+    }
+
     var feedbackMessage: String {
         switch self {
-        case .bounceBack: 
-            return "Flat surfaces act like a mirror, bouncing the sound wave straight back to the sensor."
+        case .bounceBack:
+            return "The sound wave bounced off the wall and returned to the sensor"
         case .bounceAway:
-            return "Sloped surfaces deflect the wave away. Without a returning echo, distance cannot be measured."
+            return "The sensor can't detect anything because there is no returning wave"
         case .absorbed:
-            return "Soft materials absorb sound. The sensor can only detect them from a close distance!"
+            return "Soft material absorbs soundwave and limits detection range"
         }
     }
 }
