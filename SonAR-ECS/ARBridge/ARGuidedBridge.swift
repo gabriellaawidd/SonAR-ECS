@@ -74,6 +74,7 @@ final class ARGuidedBridge {
             return
         }
 
+<<<<<<< Updated upstream
         if case .guided(let vm) = mode,
            vm.progress.usesMaterialDetection,
            surface.materialCategory == .unknown,
@@ -82,14 +83,21 @@ final class ARGuidedBridge {
             return
         }
         materialWaitCount = 0
+=======
+        // Jika objektif saat ini membutuhkan deteksi material (Lesson: Soft),
+        // tunggu hingga hasil Vision classifier selesai dievaluasi (isMaterialEvaluated = true).
+        if case .guided(let vm) = mode, vm.progress.usesMaterialDetection, !surface.isMaterialEvaluated {
+            return
+        }
+>>>>>>> Stashed changes
 
         hasEvaluatedCurrentPlacement = true
 
         let outcome: PlacementOutcome
         switch mode {
         case .guided(let vm):
-            if vm.progress.usesMaterialDetection, surface.materialCategory == .soft {
-                outcome = .absorbed
+            if vm.progress.usesMaterialDetection {
+                outcome = (surface.materialCategory == .soft) ? .absorbed : .bounceBack
             } else {
                 outcome = report.isBounceBack ? .bounceBack : .bounceAway
             }
@@ -105,9 +113,7 @@ final class ARGuidedBridge {
                 
             case .retry(let reason):
                 vm.applyRetry(reason)
-                let presentation = (outcome == .absorbed)
-                    ? FeedbackPresentation.soft(report: report)
-                    : FeedbackPresentation(lesson: outcome.lesson, report: report)
+                let presentation = FeedbackPresentation.retry(reason: reason, report: report)
                 sendMascotFeedback(presentation)
             }
 

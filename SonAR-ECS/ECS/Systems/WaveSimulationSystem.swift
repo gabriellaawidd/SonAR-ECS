@@ -94,31 +94,34 @@ struct WaveSimulationSystem: System {
                     WaveRenderer.spawnHitDecal(at: hit.worldPosition, normal: hit.normal, anchor: anchor)
                 }
 
-                if hit.incidenceAngleDegrees(incoming: forward) <= properties.echoReturnAngleLimit,
-                   !absorbent || returnedCount < Self.softMaxEchoes {
+                // Jika material lunak (soft), gelombang diserap total (tidak ada pantulan)
+                if absorbent {
+                    continue
+                }
+
+                if hit.incidenceAngleDegrees(incoming: forward) <= properties.echoReturnAngleLimit {
                     returnedCount += 1
                     let receiverPosition = receiver.position(relativeTo: nil)
                     let fullDist = simd_distance(hitPoint, receiverPosition)
 
                     let remainingDistance = max(properties.maxRange - distance, 0)
-                    let maxBounceDist = surface.materialCategory == .soft ? min(remainingDistance, 0.5) : remainingDistance
-                    let bounceDistance = min(fullDist, maxBounceDist)
+                    let bounceDistance = min(fullDist, remainingDistance)
 
                     let backDuration = legDuration(bounceDistance, properties: properties)
                     let targetPos = hitPoint + simd_normalize(receiverPosition - hitPoint) * bounceDistance
-                    let scale: Float = surface.materialCategory == .soft ? 0.15 : Self.arrowScale
+                    let scale: Float = Self.arrowScale
 
                     Self.scheduleAction(after: outDuration) {
                         WaveRenderer.spawnPulse(color: .green, from: hitPoint, to: targetPos, anchor: anchor, duration: backDuration, scale: scale)
                     }
-                } else if !absorbent {
+                } else {
                     let reflectedDirection = simd_reflect(simd_normalize(forward), simd_normalize(hit.normal))
                     let remainingDistance = max(properties.maxRange - distance, 0)
-                    let bounceDistance = surface.materialCategory == .soft ? min(remainingDistance, 0.5) : remainingDistance
+                    let bounceDistance = remainingDistance
 
                     let bounceTarget = hit.worldPosition + reflectedDirection * bounceDistance
                     let bounceDuration = legDuration(bounceDistance, properties: properties)
-                    let scale: Float = surface.materialCategory == .soft ? 0.15 : Self.arrowScale
+                    let scale: Float = Self.arrowScale
 
                     Self.scheduleAction(after: outDuration) {
                         WaveRenderer.spawnPulse(color: .red, from: hitPoint, to: bounceTarget, anchor: anchor, duration: bounceDuration, scale: scale)
