@@ -24,7 +24,6 @@ struct ARContentView: View {
     @State private var mode: ARSessionMode
     @State private var placementService: PlacementService?
     @State private var showHowItWorks = false
-    @State private var showLeaveConfirm = false
 
     init(initialMode: InitialARMode, appState: Binding<AppState>) {
         self.initialMode = initialMode
@@ -42,7 +41,6 @@ struct ARContentView: View {
 
     var body: some View {
         ZStack {
-            // 1. AR Scene View (Tetap 1 instance tanpa reload)
             ARViewContainer(mode: $mode) { service in
                 self.placementService = service
             }
@@ -63,7 +61,7 @@ struct ARContentView: View {
                     step: guidedVM.step,
                     isShowingInstruction: guidedVM.isShowingInstruction,
                     onDismissInstruction: { guidedVM.dismissInstruction() },
-                    onHome: { showLeaveConfirm = true },
+                    onHome: { appState = .home },
                     onHowItWorks: { showHowItWorks = true },
                     onContinue: { guidedVM.continueTapped() },
                     onRetry: { guidedVM.retryTapped() },
@@ -81,7 +79,7 @@ struct ARContentView: View {
                     showIntro: freeVM.showIntro,
                     isPlaced: freeVM.isPlaced,
                     onDismissIntro: { freeVM.dismissIntro() },
-                    onHome: { showLeaveConfirm = true },
+                    onHome: { appState = .home },
                     onHowItWorks: { showHowItWorks = true },
                     onReposition: { freeVM.placeAgain() }
                 )
@@ -92,19 +90,6 @@ struct ARContentView: View {
             HowItWorksSheetView()
                 .presentationDetents([.fraction(0.85), .large])
                 .presentationDragIndicator(.visible)
-        }
-        .alert(
-            GuidedCopy.leaveTitle,
-            isPresented: $showLeaveConfirm
-        ) {
-            Button(GuidedCopy.leaveConfirm, role: .destructive) {
-                appState = .home
-            }
-            Button(GuidedCopy.cancel, role: .cancel) {
-                showLeaveConfirm = false
-            }
-        } message: {
-            Text(GuidedCopy.leaveMessage)
         }
     }
 }

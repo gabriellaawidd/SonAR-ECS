@@ -14,6 +14,7 @@ enum FreeExploreCopy {
     static let leaveTitle = "Back to Menu?"
     static let leaveMessage = "Do you want to stop exploring and go back home?"
     static let leaveConfirm = "Go Home"
+    static let cancel = "Cancel"
 }
 
 struct FreeExploreOverlayView: View {
@@ -24,11 +25,13 @@ struct FreeExploreOverlayView: View {
     let onHowItWorks: () -> Void
     let onReposition: () -> Void
 
+    @State private var showLeaveConfirm = false
+
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
                 ToolBarView(
-                    onHome: onHome,
+                    onHome: { showLeaveConfirm = true },
                     onHowItWorks: onHowItWorks
                 )
 
@@ -58,6 +61,19 @@ struct FreeExploreOverlayView: View {
             .padding(.horizontal, 20)
         }
         .animation(.easeInOut(duration: 0.28), value: isPlaced)
+        .alert(
+            FreeExploreCopy.leaveTitle,
+            isPresented: $showLeaveConfirm
+        ) {
+            Button(FreeExploreCopy.leaveConfirm, role: .destructive) {
+                onHome()
+            }
+            Button(FreeExploreCopy.cancel, role: .cancel) {
+                showLeaveConfirm = false
+            }
+        } message: {
+            Text(FreeExploreCopy.leaveMessage)
+        }
     }
 }
 
