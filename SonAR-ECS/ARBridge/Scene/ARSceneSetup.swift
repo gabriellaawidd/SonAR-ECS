@@ -45,7 +45,9 @@ enum ARSceneSetup {
 
         if let sensor = sensorContainer.findEntity(named: "sensor") ?? sensorContainer.findEntity(named: "SensorNode") {
             SensorMaterialManager.applyHologram(to: sensor)
+            sensor.generateCollisionShapes(recursive: true)
         }
+        sensorContainer.generateCollisionShapes(recursive: true)
     }
 
     private static func configureMascot(in scene: Entity) {

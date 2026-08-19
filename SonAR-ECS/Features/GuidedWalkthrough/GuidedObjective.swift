@@ -25,18 +25,33 @@ enum GuidedPrompt: Equatable {
     case findFlat
     case findFlatAgain
     case findSteep
+    case findStraight
     case findSoft
+    case findSoftRetry
 
     var bubbleText: String {
         switch self {
         case .findFlat:
-            return "Point at a flat surface and tap to place"
+            return "Point to a flat surface and place the sensor"
         case .findFlatAgain:
             return "Now try pointing at a flat surface and tap to place again!"
         case .findSteep:
-            return "Now try pointing at a steep surface and tap to place again!"
+            return "Now point it at a steep surface and place it!"
+        case .findStraight:
+            return "Point straight at the wall, then place it"
         case .findSoft:
-            return "Try pointing it to a soft objects (e.g. sofa, pillow)"
+            return "Try pointing it to a soft objects, like shoes"
+        case .findSoftRetry:
+            return "Try pointing it directly to a shoe"
+        }
+    }
+
+    var needsBriefing: Bool {
+        switch self {
+        case .findFlat:
+            return false
+        case .findFlatAgain, .findSteep, .findStraight, .findSoft, .findSoftRetry:
+            return true
         }
     }
 
