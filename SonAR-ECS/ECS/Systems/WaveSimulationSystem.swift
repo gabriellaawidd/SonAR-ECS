@@ -64,6 +64,8 @@ struct WaveSimulationSystem: System {
             return
         }
 
+        SensorFeedbackService.shared.playTransmitFeedback()
+
         let transmitter = sensor.findEntity(named: SceneEntityNames.transmitter) ?? sensor
         let receiver = sensor.findEntity(named: SceneEntityNames.receiver) ?? sensor
 
