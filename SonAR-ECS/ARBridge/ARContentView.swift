@@ -88,7 +88,7 @@ struct ARContentView: View {
         }
         .sheet(isPresented: $showHowItWorks) {
             HowItWorksSheetView()
-                .presentationDetents([.fraction(0.85), .large])
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
     }
