@@ -55,13 +55,27 @@ struct SplashScreenView: View {
                     .scaledToFit()
                     .frame(height: 280)
 
-                HStack(spacing: 2) {
-                    Text("Son")
-                        .foregroundStyle(sonGradient)
-                    Text("AR")
-                        .foregroundStyle(arGradient)
+                ZStack(alignment: .center) {
+                    HStack(spacing: 2) {
+                        Text("Son")
+                        Text("AR")
+                    }
+                    .font(.system(size: 72, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(color: .white, radius: 1, x: -1.5, y: -1.5)
+                    .shadow(color: .white, radius: 1, x: 1.5, y: -1.5)
+                    .shadow(color: .white, radius: 1, x: -1.5, y: 1.5)
+                    .shadow(color: .white, radius: 1, x: 1.5, y: 1.5)
+
+                    HStack(spacing: 2) {
+                        Text("Son")
+                            .foregroundStyle(sonGradient)
+                        Text("AR")
+                            .foregroundStyle(arGradient)
+                    }
+                    .font(.system(size: 72, weight: .black, design: .rounded))
+                    .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
                 }
-                .font(.system(size: 72, weight: .black, design: .rounded))
 
                 Text("Learn how a robot sees with\nultrasonic wave")
                     .font(.headline)
@@ -84,6 +98,11 @@ struct SplashScreenView: View {
                 }
             }
         }
+        .task {
+            Task.detached(priority: .userInitiated) {
+                await AppSceneCache.preload()
+            }
+        }
         .onTapGesture {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                 appState = .home
@@ -92,6 +111,6 @@ struct SplashScreenView: View {
     }
 }
 
-#Preview() {
+#Preview {
     SplashScreenView(appState: .constant(.splash))
 }

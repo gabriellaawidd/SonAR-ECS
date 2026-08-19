@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var currentAppState: AppState = .splash
+    @Namespace private var mascotNamespace
     
     var body: some View {
         Group {
@@ -18,7 +19,7 @@ struct ContentView: View {
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))
 
             case .home:
-                HomeSelectionView(appState: $currentAppState)
+                HomeSelectionView(appState: $currentAppState, mascotNamespace: mascotNamespace)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
 
             case .guidedWalkthrough:
@@ -29,8 +30,18 @@ struct ContentView: View {
                 ARContentView(initialMode: .freeExplore, appState: $currentAppState)
                     .transition(.opacity)
 
-            case .sensorIntro:
-                HomeSelectionView(appState: $currentAppState)
+            case .sensorIntro(let isGuided):
+                SensorIntroView(
+                    isGuided: isGuided,
+                    appState: $currentAppState,
+                    mascotNamespace: mascotNamespace,
+                    onBack: {
+                        withAnimation {
+                            currentAppState = .home
+                        }
+                    }
+                )
+                .transition(.opacity)
             }
         }
         .animation(.spring(response: 0.65, dampingFraction: 0.8), value: currentAppState)

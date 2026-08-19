@@ -5,6 +5,10 @@
 //  Created by Gabriella Angelina Widjaja on 16/08/26.
 //
 
+//
+//  ARSessionConfigurator.swift
+//  SonAR-ECS
+//
 
 import ARKit
 import RealityKit
@@ -19,16 +23,8 @@ enum ARSessionConfigurator {
         let configuration = ARWorldTrackingConfiguration()
         configuration.planeDetection = [.horizontal, .vertical]
 
-        let supportsMesh = ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)
-        if supportsMesh {
+        if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
             configuration.sceneReconstruction = .mesh
-            arView.environment.sceneUnderstanding.options.insert(.occlusion)
-        }
-
-        if ARWorldTrackingConfiguration.supportsFrameSemantics(.smoothedSceneDepth) {
-            configuration.frameSemantics.insert(.smoothedSceneDepth)
-        } else if ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
-            configuration.frameSemantics.insert(.sceneDepth)
         }
 
         arView.session.run(

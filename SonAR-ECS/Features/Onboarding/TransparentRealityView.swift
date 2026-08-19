@@ -18,7 +18,7 @@ struct TransparentRealityView: UIViewRepresentable {
 
         let cameraAnchor = AnchorEntity(world: .zero)
         let camera = PerspectiveCamera()
-        camera.position = [0, 0, 0.35]
+        camera.position = [0, 0, 0.5]
         cameraAnchor.addChild(camera)
         arView.scene.addAnchor(cameraAnchor)
 
@@ -31,31 +31,35 @@ struct TransparentRealityView: UIViewRepresentable {
         arView.scene.addAnchor(lightAnchor)
 
         Task { @MainActor in
-            var loadedScene: Entity?
-
-            if let s = try? await Entity(named: "Models/MainScene", in: SonARAssets.sonARAssetsBundle) {
-                loadedScene = s
-            } else if let s = try? await Entity(named: "MainScene", in: SonARAssets.sonARAssetsBundle) {
-                loadedScene = s
-            }
-
-            guard let mainScene = loadedScene,
-                  let sensorNode = mainScene.findEntity(named: "SensorNode")
-                    ?? mainScene.findEntity(named: "sensor")
-                    ?? mainScene.findEntity(named: "SensorContainer") else { return }
+//            var loadedScene: Entity?
+//
+//            if let s = try? await Entity(named: "Models/MainScene", in: SonARAssets.sonARAssetsBundle) {
+//                loadedScene = s
+//            } else if let s = try? await Entity(named: "MainScene", in: SonARAssets.sonARAssetsBundle) {
+//                loadedScene = s
+//            }
+//
+//            guard let mainScene = loadedScene,
+//                  let sensorNode = mainScene.findEntity(named: "SensorNode")
+//                    ?? mainScene.findEntity(named: "sensor")
+//                    ?? mainScene.findEntity(named: "SensorContainer") else { return }
+            guard let mainScene = await AppSceneCache.getScene(),
+                             let sensorNode = mainScene.findEntity(named: "SensorNode")
+                               ?? mainScene.findEntity(named: "sensor")
+                               ?? mainScene.findEntity(named: "SensorContainer") else { return }
 
             let model = sensorNode.clone(recursive: true)
             model.isEnabled = true
 
             let modelAnchor = AnchorEntity(world: .zero)
             
-            let bounds = model.visualBounds(relativeTo: nil)
+            let bounds = model.visualBounds(relativeTo: model)
             let center = bounds.center
             model.position = -center
 
             let maxDim = max(bounds.extents.x, bounds.extents.y, bounds.extents.z)
             if maxDim > 0 {
-                let targetSize: Float = 0.12
+                let targetSize: Float = 0.4
                 let scaleFactor = targetSize / maxDim
                 model.scale = SIMD3<Float>(repeating: scaleFactor)
             }

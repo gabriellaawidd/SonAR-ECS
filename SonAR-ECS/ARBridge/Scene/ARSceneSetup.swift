@@ -13,15 +13,7 @@ enum ARSceneSetup {
 
     @MainActor
     static func setup(arView: ARView) async {
-        var loadedScene: Entity?
-        if let s = try? await Entity(named: "Models/MainScene", in: SonARAssets.sonARAssetsBundle) {
-            loadedScene = s
-        }
-        else if let s = try? await Entity(named: "MainScene", in: SonARAssets.sonARAssetsBundle){
-            loadedScene = s
-        }
-        
-        guard let mainScene = loadedScene else {
+        guard let mainScene = await AppSceneCache.getScene() else {
             return
         }
 

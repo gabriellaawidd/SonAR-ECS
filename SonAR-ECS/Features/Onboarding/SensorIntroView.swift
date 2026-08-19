@@ -5,17 +5,33 @@
 //  Created by Gabriella Angelina Widjaja on 17/08/26.
 //
 
+
 import SwiftUI
 
 struct SensorIntroView: View {
-    let isGuided: Bool
+    var isGuided: Bool
+
     @Binding var appState: AppState
+    var mascotNamespace: Namespace.ID
+    var onBack: () -> Void
+
+    @State private var mascotState: MascotAnimState = .normal
+    @State private var showSensor: Bool = false
+    @State private var showButton: Bool = false
+    @State private var isWiggling: Bool = false
+    @State private var cameraActive: Bool = true
+    @State private var mascotVisible: Bool = true
+
+    enum MascotAnimState {
+        case normal
+        case movingDownAndGrowing
+    }
 
     var body: some View {
         ZStack {
-            CameraPreviewBackdrop()
+            CameraPreviewBackdrop(isActive: cameraActive)
                 .ignoresSafeArea()
-
+             
             LinearGradient(
                 colors: [
                     Color.black.opacity(0.65),
@@ -28,47 +44,54 @@ struct SensorIntroView: View {
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
+                HStack {
+                    Button(action: onBack) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 40, height: 40)
+                            .background(Circle().fill(.black.opacity(0.35)))
+                    }
+                    .padding(.leading, 16)
+                    .padding(.top, 8)
+                    Spacer()
+                }
+
                 VStack(spacing: 8) {
                     Text("Meet Your\nRobot's Eyes")
                         .font(.system(size: 34, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
-
                     Text("Your robot sees with this")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(.white.opacity(0.85))
                 }
-                .padding(.top, 20)
+                .padding(.top, 12)
 
                 Spacer()
 
-                VStack(spacing: 6) {
-                    Image("rotate")
-                        .resizable()
-                        .renderingMode(.template)
-                        .scaledToFit()
-                        .frame(width: 140)
-                        .foregroundStyle(.white.opacity(0.9))
-
-                    VStack(spacing: 2) {
-                        Text("360°")
-                            .font(.system(size: 13, weight: .bold))
-                        Text("Drag to Rotate")
-                            .font(.system(size: 13, weight: .bold))
+                ZStack {
+                    if showSensor {
+                        TransparentRealityView()
+                            .frame(height: 180)
+                            .rotationEffect(.degrees(isWiggling ? 10 : -10))
+                            .scaleEffect(isWiggling ? 1.04 : 1.0)
+                            .transition(.opacity)
                     }
-                    .foregroundStyle(.white)
                 }
-                .padding(.bottom, 12)
-
-                TransparentRealityView()
-                    .frame(height: 240)
-
+                .frame(height: 240)
+                 
                 Spacer()
 
                 Button {
-                    withAnimation(.easeInOut(duration: 0.4)) {
-                        appState = isGuided ? .guidedWalkthrough : .freeExplore
+                    cameraActive = false
+                    
+                    Task {
+                        try? await Task.sleep(nanoseconds: 120_000_000)
+                        withAnimation(.easeInOut(duration: 0.4)) {
+                            appState = isGuided ? .guidedWalkthrough : .freeExplore
+                        }
                     }
                 } label: {
                     Text("Let's Start")
@@ -90,14 +113,54 @@ struct SensorIntroView: View {
                 }
                 .padding(.horizontal, 36)
                 .padding(.bottom, 36)
+                .opacity(showButton ? 1 : 0)
+                .offset(y: showButton ? 0 : 20)
+            }
+
+            if mascotVisible {
+                Image("mascotHome")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 180)
+                    .scaleEffect(mascotState == .movingDownAndGrowing ? 3.0 : 1.0, anchor: .bottom)
+                    .offset(y: mascotState == .movingDownAndGrowing ? 320 : 0)
+                    .opacity(showSensor ? 0 : 1)
+                    .matchedGeometryEffect(id: "mascotHero", in: mascotNamespace)
             }
         }
-        .toolbarColorScheme(.light, for: .navigationBar)
+        .tint(.white)
+        .task {
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            withAnimation(.spring(response: 1, dampingFraction: 0.85, blendDuration: 0)) {
+                mascotState = .movingDownAndGrowing
+            }
+
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            withAnimation(.easeInOut(duration: 0.7)) {
+                showSensor = true
+            }
+
+            mascotVisible = false
+
+            withAnimation(.easeInOut(duration: 0.3).repeatCount(3, autoreverses: true).delay(0.2)) {
+                isWiggling = true
+            }
+
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            withAnimation(.easeInOut(duration: 0.6)) {
+                showButton = true
+            }
+        }
     }
 }
 
-#Preview() {
-    NavigationStack {
-        SensorIntroView(isGuided: true, appState: .constant(.splash))
+#Preview {
+    PreviewWrapper()
+}
+
+private struct PreviewWrapper: View {
+    @Namespace private var ns
+    var body: some View {
+        SensorIntroView(isGuided: true, appState: .constant(.sensorIntro(isGuided: true)), mascotNamespace: ns, onBack: {})
     }
 }
