@@ -25,6 +25,7 @@ struct ReconstructedSurfaceComponent: Component {
 
     var materialCategory: MaterialCategory = .unknown
     var materialConfidence: Float = 0
+    var isMaterialEvaluated: Bool = false
 }
 
 struct SurfacePlaneInstanceComponent: Component {}

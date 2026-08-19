@@ -88,8 +88,8 @@ final class ARGuidedBridge {
         let outcome: PlacementOutcome
         switch mode {
         case .guided(let vm):
-            if vm.progress.usesMaterialDetection, surface.materialCategory == .soft {
-                outcome = .absorbed
+            if vm.progress.usesMaterialDetection {
+                outcome = (surface.materialCategory == .soft) ? .absorbed : .bounceBack
             } else {
                 outcome = report.isBounceBack ? .bounceBack : .bounceAway
             }
@@ -105,9 +105,7 @@ final class ARGuidedBridge {
                 
             case .retry(let reason):
                 vm.applyRetry(reason)
-                let presentation = (outcome == .absorbed)
-                    ? FeedbackPresentation.soft(report: report)
-                    : FeedbackPresentation(lesson: outcome.lesson, report: report)
+                let presentation = FeedbackPresentation.retry(reason: reason, report: report)
                 sendMascotFeedback(presentation)
             }
 

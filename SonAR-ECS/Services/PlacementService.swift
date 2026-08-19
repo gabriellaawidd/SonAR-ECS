@@ -64,15 +64,21 @@ final class PlacementService {
 
         guidedBridge?.beginMeasurement()
 
-        if let centerHit = hits.first ?? nil {
-            let pixelBuffer = arView.session.currentFrame?.capturedImage
+        let anyHit = hits.compactMap({ $0 }).first
+        let pixelBuffer = arView.session.currentFrame?.capturedImage
+        if let targetHit = anyHit {
             detectMaterial(
                 pixelBuffer: pixelBuffer,
-                hit: centerHit,
+                hit: targetHit,
                 facingDirection: directions.first ?? SIMD3<Float>(0, 0, -1),
                 sensor: sensor,
                 lockID: lockID
             )
+        } else {
+            if var surface = sensor.components[ReconstructedSurfaceComponent.self], surface.lockID == lockID {
+                surface.isMaterialEvaluated = true
+                sensor.components[ReconstructedSurfaceComponent.self] = surface
+            }
         }
     }
     
@@ -226,7 +232,13 @@ final class PlacementService {
     }
 
     private func detectMaterial(pixelBuffer: CVPixelBuffer?, hit: RaycastHit, facingDirection: SIMD3<Float>, sensor: Entity, lockID: UUID) {
-        guard let pixelBuffer else { return }
+        guard let pixelBuffer else {
+            if var surface = sensor.components[ReconstructedSurfaceComponent.self], surface.lockID == lockID {
+                surface.isMaterialEvaluated = true
+                sensor.components[ReconstructedSurfaceComponent.self] = surface
+            }
+            return
+        }
         materialDetectionManager.detect(
             pixelBuffer: pixelBuffer,
             hit: hit,
@@ -236,6 +248,8 @@ final class PlacementService {
                   var surface = sensor.components[ReconstructedSurfaceComponent.self],
                   surface.lockID == lockID else { return }
             surface.materialCategory = reading.materialCategory
+            surface.materialConfidence = reading.materialConfidence
+            surface.isMaterialEvaluated = true
             sensor.components[ReconstructedSurfaceComponent.self] = surface
         }
     }

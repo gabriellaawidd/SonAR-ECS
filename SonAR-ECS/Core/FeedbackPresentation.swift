@@ -38,22 +38,30 @@ struct FeedbackPresentation: Equatable {
     }
 
     static func soft(report: PulseReport?) -> FeedbackPresentation {
-        let isFar = (report?.distanceCentimeters == nil)
+        FeedbackPresentation(
+            badge: GuidedLesson.absorbed.badge,
+            message: "Soft material absorbs soundwave and limits detection range",
+            distanceText: Self.distanceText(from: report, reportsDistance: true),
+            badgeColor: UIColor(GuidedLesson.absorbed.badgeColor)
+        )
+    }
 
-        if isFar {
-            return FeedbackPresentation(
-                badge: GuidedLesson.bounceAway.badge,
-                message: "Sound absorbed by soft material. Try to move closer!",
-                distanceText: nil,
-                badgeColor: UIColor(GuidedLesson.bounceAway.badgeColor)
-            )
-        } else {
-            return FeedbackPresentation(
-                badge: GuidedLesson.absorbed.badge,
-                message: "Soft material absorbs soundwave and limits detection range",
-                distanceText: Self.distanceText(from: report, reportsDistance: true),
-                badgeColor: UIColor(GuidedLesson.absorbed.badgeColor)
-            )
+    static func retry(reason: GuidedRetryReason, report: PulseReport?) -> FeedbackPresentation {
+        let badge: String
+        let color: UIColor
+        switch reason {
+        case .notSoft:
+            badge = "HARD SURFACE"
+            color = UIColor(AppPalette.statusOrange)
+        case .tooSteep, .notSteepEnough:
+            badge = GuidedLesson.bounceAway.badge
+            color = UIColor(GuidedLesson.bounceAway.badgeColor)
         }
+        return FeedbackPresentation(
+            badge: badge,
+            message: reason.bubbleText,
+            distanceText: nil,
+            badgeColor: color
+        )
     }
 }
