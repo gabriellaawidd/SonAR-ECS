@@ -9,7 +9,7 @@ import Foundation
 import simd
 
 enum PlacementSolver {
-    static let previewDistance: Float = 0.25
+    static let previewDistance: Float = 0.20
     static let boardRoll: Float = 0.0
 
     static func previewPosition(

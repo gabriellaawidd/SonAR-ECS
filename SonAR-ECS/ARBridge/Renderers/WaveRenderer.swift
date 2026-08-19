@@ -98,6 +98,10 @@ enum WaveRenderer {
         pulse.orientation = pulse.orientation * coneFacingTarget
 
         pulse.scale = SIMD3<Float>(repeating: scale)
+        let hitScale = scale > 1e-4 ? 0.08 / scale : 0.08
+        pulse.components.set(CollisionComponent(
+            shapes: [.generateSphere(radius: hitScale)]
+        ))
         if pulse.parent != anchor {
             pulse.removeFromParent()
             anchor.addChild(pulse)

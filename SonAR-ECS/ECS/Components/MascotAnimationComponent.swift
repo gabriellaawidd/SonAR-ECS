@@ -19,4 +19,7 @@ struct MascotAnimationComponent: Component {
     var elapsed: TimeInterval = 0
     var currentContent: FeedbackPresentation
     var targetScale: Float = 1.0
+
+    var baseWorldPosition: SIMD3<Float> = .zero
+    var hoverElapsed: TimeInterval = 0
 }

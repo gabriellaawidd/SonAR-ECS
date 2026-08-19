@@ -37,7 +37,7 @@ enum ARSceneSetup {
             return
         }
 
-        sensorContainer.scale = SIMD3<Float>(repeating: 0.2)
+        sensorContainer.scale = SIMD3<Float>(repeating: 0.12)
         sensorContainer.isEnabled = false
 
         sensorContainer.components.set(SensorStateComponent())
@@ -48,7 +48,10 @@ enum ARSceneSetup {
             SensorMaterialManager.applyHologram(to: sensor)
             sensor.generateCollisionShapes(recursive: true)
         }
-        sensorContainer.generateCollisionShapes(recursive: true)
+
+        sensorContainer.components.set(CollisionComponent(
+            shapes: [.generateBox(size: SIMD3<Float>(repeating: 0.6))]
+        ))
     }
 
     private static func configureMascot(in scene: Entity) {

@@ -76,10 +76,24 @@ final class PlacementService {
         }
     }
     
+    private static let markerScreenTapRadius: CGFloat = 64
+
     @MainActor
     func handleMarkerTap(at point: CGPoint) async -> Bool {
-        guard let arView else { return false }
+        guard let arView,
+              let marker = activeAnnotationMarker(),
+              let markerComponent = marker.components[AnnotationMarkerComponent.self] else {
+            return false
+        }
 
+        if isTapOnMarker(point, marker: marker, in: arView) {
+            return spawnRobot(with: markerComponent.content, removing: marker)
+        }
+        return false
+    }
+
+    @MainActor
+    private func isTapOnMarker(_ point: CGPoint, marker: Entity, in arView: ARView) -> Bool {
         let samplePoints = [
             point,
             CGPoint(x: point.x - 24, y: point.y),
@@ -90,34 +104,22 @@ final class PlacementService {
             CGPoint(x: point.x + 18, y: point.y + 18)
         ]
 
-        var foundMarkerEntity: Entity? = nil
         for p in samplePoints {
             if let entity = arView.entity(at: p) ?? arView.hitTest(p).first?.entity,
-               AnnotationMarker.isTappable(entity) {
-                foundMarkerEntity = entity
-                break
+               AnnotationMarker.isTappable(entity) || isSensorOrWave(entity) {
+                return true
             }
         }
 
-        guard let tapped = foundMarkerEntity ?? sensorOrWaveTapMarkerProxy(at: samplePoints) else {
-            return false
+        if let screen = arView.project(marker.position(relativeTo: nil)) {
+            let dx = screen.x - point.x
+            let dy = screen.y - point.y
+            if (dx * dx + dy * dy) <= Self.markerScreenTapRadius * Self.markerScreenTapRadius {
+                return true
+            }
         }
 
-        var markerEntity: Entity? = tapped
-        while let node = markerEntity, node.components[AnnotationMarkerComponent.self] == nil {
-            markerEntity = node.parent
-        }
-
-        let marker = markerEntity?.components[AnnotationMarkerComponent.self] != nil
-            ? markerEntity
-            : activeAnnotationMarker()
-
-        guard let marker,
-              let markerComponent = marker.components[AnnotationMarkerComponent.self] else {
-            return false
-        }
-
-        return spawnRobot(with: markerComponent.content, removing: marker)
+        return false
     }
 
     @MainActor
@@ -125,19 +127,6 @@ final class PlacementService {
         guard let arView else { return nil }
         let query = EntityQuery(where: .has(AnnotationMarkerComponent.self))
         return Array(arView.scene.performQuery(query)).first
-    }
-
-    @MainActor
-    private func sensorOrWaveTapMarkerProxy(at samplePoints: [CGPoint]) -> Entity? {
-        guard let arView, activeAnnotationMarker() != nil else { return nil }
-
-        for p in samplePoints {
-            guard let entity = arView.entity(at: p) ?? arView.hitTest(p).first?.entity else { continue }
-            if isSensorOrWave(entity) {
-                return entity
-            }
-        }
-        return nil
     }
 
     private func isSensorOrWave(_ entity: Entity) -> Bool {
@@ -208,11 +197,21 @@ final class PlacementService {
                     result.worldTransform.columns.3.y,
                     result.worldTransform.columns.3.z
                 )
-                let normal = simd_normalize(SIMD3<Float>(
+                let axisY = simd_normalize(SIMD3<Float>(
                     result.worldTransform.columns.1.x,
                     result.worldTransform.columns.1.y,
                     result.worldTransform.columns.1.z
                 ))
+                let axisZ = simd_normalize(SIMD3<Float>(
+                    result.worldTransform.columns.2.x,
+                    result.worldTransform.columns.2.y,
+                    result.worldTransform.columns.2.z
+                ))
+                let rayDir = simd_normalize(direction)
+                var normal = abs(simd_dot(rayDir, axisZ)) >= abs(simd_dot(rayDir, axisY)) ? axisZ : axisY
+                if simd_dot(normal, rayDir) > 0 {
+                    normal = -normal
+                }
 
                 return RaycastHit(
                     worldPosition: worldPosition,
