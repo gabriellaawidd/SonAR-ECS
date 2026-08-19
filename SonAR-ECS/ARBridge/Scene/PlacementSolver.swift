@@ -10,7 +10,7 @@ import simd
 
 enum PlacementSolver {
     static let previewDistance: Float = 0.25
-    static let boardRoll: Float = .pi / 2
+    static let boardRoll: Float = 0.0
 
     static func previewPosition(
         cameraTransform: simd_float4x4,

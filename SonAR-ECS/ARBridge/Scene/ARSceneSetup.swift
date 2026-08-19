@@ -21,9 +21,9 @@ enum ARSceneSetup {
         anchor.addChild(mainScene)
         arView.scene.addAnchor(anchor)
 
-        let cameraTracker = Entity()
-        cameraTracker.components.set(CameraTrackingComponent())
-        anchor.addChild(cameraTracker)
+        let cameraTracker = AnchorEntity(.camera)
+        cameraTracker.name = "CameraTracker"
+        arView.scene.addAnchor(cameraTracker)
 
         configureSensor(in: mainScene)
         configureMascot(in: mainScene)

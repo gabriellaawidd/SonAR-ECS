@@ -16,7 +16,6 @@ enum RealityKitRegistry {
     private static func registerComponents() {
         BobbingComponent.registerComponent()
         CustomBillboardComponent.registerComponent()
-        CameraTrackingComponent.registerComponent()
         MascotAnimationComponent.registerComponent()
         NeedsMascotFeedback.registerComponent()
         PlacementAnimationComponent.registerComponent()

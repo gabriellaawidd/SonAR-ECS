@@ -17,11 +17,25 @@ struct WaveSimulationSystem: System {
 
     private static let minReturningRays = 3
     private static let softMaxEchoes = 2
-    private static let arrowScale: Float = 0.35
+    private static let arrowScale: Float = 0.175
+
+    private static var pendingActions: [(time: TimeInterval, action: () -> Void)] = []
+
+    static func scheduleAction(after delay: TimeInterval, action: @escaping () -> Void) {
+        pendingActions.append((time: delay, action: action))
+    }
 
     init(scene: RealityKit.Scene) {}
 
     func update(context: SceneUpdateContext) {
+        let dt = TimeInterval(context.deltaTime)
+        for i in (0..<Self.pendingActions.count).reversed() {
+            Self.pendingActions[i].time -= dt
+            if Self.pendingActions[i].time <= 0 {
+                let action = Self.pendingActions.remove(at: i).action
+                action()
+            }
+        }
         let properties = context.scene.anchors
             .compactMap { $0.findEntity(named: SceneEntityNames.arrowTemplate)?.components[WavePropertiesComponent.self] }
             .first ?? WavePropertiesComponent()
@@ -74,7 +88,7 @@ struct WaveSimulationSystem: System {
             WaveRenderer.spawnPulse(color: .cyan, from: origin, to: hitPoint, anchor: anchor, duration: outDuration, scale: Self.arrowScale)
 
             if let hit = hit {
-                DispatchQueue.main.asyncAfter(deadline: .now() + outDuration) {
+                Self.scheduleAction(after: outDuration) {
                     WaveRenderer.spawnHitDecal(at: hit.worldPosition, normal: hit.normal, anchor: anchor)
                 }
 
@@ -92,7 +106,7 @@ struct WaveSimulationSystem: System {
                     let targetPos = hitPoint + simd_normalize(receiverPosition - hitPoint) * bounceDistance
                     let scale: Float = surface.materialCategory == .soft ? 0.15 : Self.arrowScale
 
-                    DispatchQueue.main.asyncAfter(deadline: .now() + outDuration) {
+                    Self.scheduleAction(after: outDuration) {
                         WaveRenderer.spawnPulse(color: .green, from: hitPoint, to: targetPos, anchor: anchor, duration: backDuration, scale: scale)
                     }
                 } else if !absorbent {
@@ -104,7 +118,7 @@ struct WaveSimulationSystem: System {
                     let bounceDuration = legDuration(bounceDistance, properties: properties)
                     let scale: Float = surface.materialCategory == .soft ? 0.15 : Self.arrowScale
 
-                    DispatchQueue.main.asyncAfter(deadline: .now() + outDuration) {
+                    Self.scheduleAction(after: outDuration) {
                         WaveRenderer.spawnPulse(color: .red, from: hitPoint, to: bounceTarget, anchor: anchor, duration: bounceDuration, scale: scale)
                     }
                 }

@@ -12,13 +12,12 @@ struct PreviewFollowSystem: System {
     private static let previewQuery = EntityQuery(
         where: .has(SensorPreviewComponent.self) && .has(SensorStateComponent.self)
     )
-    private static let cameraQuery = EntityQuery(where: .has(CameraTrackingComponent.self))
 
     init(scene: RealityKit.Scene) {}
 
     func update(context: SceneUpdateContext) {
-        guard let cameraEntity = Array(context.entities(matching: Self.cameraQuery, updatingSystemWhen: .rendering)).first,
-              let camera = cameraEntity.components[CameraTrackingComponent.self] else { return }
+        guard let cameraAnchor = context.scene.findEntity(named: "CameraTracker") else { return }
+        let cameraTransform = cameraAnchor.transformMatrix(relativeTo: nil)
 
         for entity in context.entities(matching: Self.previewQuery, updatingSystemWhen: .rendering) {
             guard var preview = entity.components[SensorPreviewComponent.self],
@@ -26,11 +25,11 @@ struct PreviewFollowSystem: System {
                   state.phase == .carrying else { continue }
 
             let targetPosition = PlacementSolver.previewPosition(
-                cameraTransform: camera.worldTransform,
+                cameraTransform: cameraTransform,
                 distance: preview.followDistance
             )
             let targetOrientation = PlacementSolver.previewOrientation(
-                cameraTransform: camera.worldTransform
+                cameraTransform: cameraTransform
             )
 
             if preview.lastTargetPosition == nil {

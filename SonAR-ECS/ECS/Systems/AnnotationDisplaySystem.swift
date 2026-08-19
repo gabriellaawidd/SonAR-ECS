@@ -12,7 +12,6 @@ import Foundation
 struct AnnotationDisplaySystem: System {
     private static let needsDisplayQuery = EntityQuery(where: .has(NeedsAnnotationDisplay.self))
     private static let existingMarkerQuery = EntityQuery(where: .has(AnnotationMarkerComponent.self))
-    private static let cameraQuery = EntityQuery(where: .has(CameraTrackingComponent.self))
 
     private static let heightAboveSensor: Float = 0.045
     private static let bobHeight: Float = 0.006
@@ -38,12 +37,12 @@ struct AnnotationDisplaySystem: System {
                     marker.setPosition(worldPosition, relativeTo: nil)
                 }
 
-                if let cameraEntity = Array(context.entities(matching: Self.cameraQuery, updatingSystemWhen: .rendering)).first,
-                   let camera = cameraEntity.components[CameraTrackingComponent.self] {
+                if let cameraAnchor = context.scene.findEntity(named: "CameraTracker") {
+                    let cameraTransform = cameraAnchor.transformMatrix(relativeTo: nil)
                     let camPos = SIMD3<Float>(
-                        camera.worldTransform.columns.3.x,
-                        camera.worldTransform.columns.3.y,
-                        camera.worldTransform.columns.3.z
+                        cameraTransform.columns.3.x,
+                        cameraTransform.columns.3.y,
+                        cameraTransform.columns.3.z
                     )
                     let delta = camPos - marker.position(relativeTo: nil)
                     let horizontal = sqrt(delta.x * delta.x + delta.z * delta.z)

@@ -33,10 +33,6 @@ struct ARViewContainer: UIViewRepresentable {
         Task {
             await ARSceneSetup.setup(arView: arView)
 
-            let cameraSync = ARCameraSync(scene: arView.scene)
-            arView.session.delegate = cameraSync
-            context.coordinator.cameraSync = cameraSync
-
             let guidedBridge = ARGuidedBridge(scene: arView.scene, mode: mode)
             context.coordinator.guidedBridge = guidedBridge
 
@@ -56,7 +52,6 @@ struct ARViewContainer: UIViewRepresentable {
     }
 
     final class Coordinator: NSObject {
-        var cameraSync: ARCameraSync?
         var placementService: PlacementService?
         var guidedBridge: ARGuidedBridge?
 

@@ -10,18 +10,17 @@ import simd
 
 struct BillboardSystem: System {
     private static let billboardQuery = EntityQuery(where: .has(CustomBillboardComponent.self))
-    private static let cameraQuery = EntityQuery(where: .has(CameraTrackingComponent.self))
     
     init(scene: RealityKit.Scene) {}
     
     func update(context: SceneUpdateContext) {
-        guard let cameraEntity = Array(context.entities(matching: Self.cameraQuery, updatingSystemWhen: .rendering)).first,
-              let camera = cameraEntity.components[CameraTrackingComponent.self] else { return }
+        guard let cameraAnchor = context.scene.findEntity(named: "CameraTracker") else { return }
         
+        let cameraTransform = cameraAnchor.transformMatrix(relativeTo: nil)
         let cameraPosition = SIMD3<Float>(
-            camera.worldTransform.columns.3.x,
-            camera.worldTransform.columns.3.y,
-            camera.worldTransform.columns.3.z
+            cameraTransform.columns.3.x,
+            cameraTransform.columns.3.y,
+            cameraTransform.columns.3.z
         )
         
         for entity in context.entities(matching: Self.billboardQuery, updatingSystemWhen: .rendering) {
