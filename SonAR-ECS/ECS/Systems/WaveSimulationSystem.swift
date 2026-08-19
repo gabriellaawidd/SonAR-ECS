@@ -56,6 +56,8 @@ struct WaveSimulationSystem: System {
     }
 
     private func fire(from sensor: Entity, surface: ReconstructedSurfaceComponent, properties: WavePropertiesComponent, scene: RealityKit.Scene) {
+        BeepPlayer.play()
+
         var current: Entity? = sensor
         while let c = current, !(c is AnchorEntity) {
             current = c.parent
