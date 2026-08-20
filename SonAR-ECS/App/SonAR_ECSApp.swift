@@ -15,6 +15,7 @@ struct SonAR_ECSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+//            FreeExploreOverlayView()
         }
     }
 }

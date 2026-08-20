@@ -11,7 +11,7 @@ import Foundation
 
 final class ARGuidedBridge {
     private weak var scene: RealityKit.Scene?
-    private var mode: ARSessionMode
+    var mode: ARSessionMode
     private var cancellable: AnyCancellable?
     private var hasEvaluatedCurrentPlacement = false
     private var materialWaitCount = 0

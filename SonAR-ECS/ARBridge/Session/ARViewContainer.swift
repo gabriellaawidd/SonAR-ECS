@@ -53,8 +53,19 @@ struct ARViewContainer: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: ARView, context: Context) {
-        if case .freeExplore(let freeExploreViewModel) = mode {
-            context.coordinator.guidedBridge?.switchToFreeExplore(freeExploreViewModel)
+        if case .freeExplore(let freeExploreViewModel) = mode,
+           let bridge = context.coordinator.guidedBridge {
+            // Check if bridge already has this mode to prevent infinite resets
+            let alreadyFreeExplore: Bool
+            if case .freeExplore = bridge.mode {
+                alreadyFreeExplore = true
+            } else {
+                alreadyFreeExplore = false
+            }
+
+            if !alreadyFreeExplore {
+                bridge.switchToFreeExplore(freeExploreViewModel)
+            }
         }
     }
 
